@@ -8,11 +8,11 @@
 		<version>2.7.3</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>com.redfishserver</groupId>
-	<artifactId>Redfish_Server</artifactId>
+	<groupId>com.picmg</groupId>
+	<artifactId>redfish_server_template</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>Redfish_Server</name>
-	<description>SER517 Group 11 Redfish Server Implementation Using OpenAPI</description>
+	<name>redfish_server_temlate</name>
+	<description>Redfish Server Framework Using OpenAPI</description>
 	<properties>
 		<java.version>1.8</java.version>
 	</properties>
