@@ -386,7 +386,7 @@ public class ChassisService {
         List<SensorCollection> sensorCollectionList = sensorCollectionRepository.findAll();
         SensorCollection collection = null;
         for(SensorCollection sensorCollection : sensorCollectionList){
-            System.out.println(sensorCollection.getAtOdataId());
+            // DEBUG: System.out.println(sensorCollection.getAtOdataId());
             if(sensorCollection.getAtOdataId().contains(controlObjectId)) {
                 collection = sensorCollection;
                 break;

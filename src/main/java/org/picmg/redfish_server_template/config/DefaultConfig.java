@@ -28,5 +28,5 @@ import javax.annotation.PostConstruct;
 @Configuration
 public class DefaultConfig {
     @PostConstruct
-    public void environmentMessage(){ System.out.println("Opening the default profile"); }
+    public void environmentMessage(){ // DEBUG: System.out.println("Opening the default profile"); }
 }

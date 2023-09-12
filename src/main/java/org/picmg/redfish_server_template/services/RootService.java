@@ -67,7 +67,7 @@ public class RootService {
     }
 
     public void clearAllPreviousSessions() {
-        System.out.println("Clearing all Previous Sessions....");
+        // DEBUG: System.out.println("Clearing all Previous Sessions....");
         List<Session_Session> sessionsList = sessionRepository.findAll();
         if(sessionsList.size()==0)return;
         for (Session_Session session: sessionsList) {
@@ -98,7 +98,7 @@ public class RootService {
     }
 
     public void abortAllPreviouslyRunningTasks() {
-        System.out.println("Aborting all Previous Running Tasks....");
+        // DEBUG: System.out.println("Aborting all Previous Running Tasks....");
         List<Task_Task> taskList = taskRepository.findAll();
         for(Task_Task task: taskList) {
             if(task.getTaskState().toString().equalsIgnoreCase(String.valueOf(Task_TaskState.RUNNING))) {
@@ -113,12 +113,12 @@ public class RootService {
     @Async
     public Future<List<ServiceRoot_ServiceRoot>> getRootData(OffsetDateTime startTime, Integer taskId) throws Exception {
         List<ServiceRoot_ServiceRoot> rootList = rootServiceRepository.findAll();
-        System.out.println("Pushing Get Root Data to Async Task");
+        // DEBUG: System.out.println("Pushing Get Root Data to Async Task");
 
         //TODO: Delaying Service Method by 40 Seconds For Async Demo
 //        Thread.sleep(10000);
 
-        System.out.println("Async Root Service Complete");
+        // DEBUG: System.out.println("Async Root Service Complete");
         if( ChronoUnit.SECONDS.between(startTime, OffsetDateTime.now())  > taskWaitTime+1) {
             taskService.updateTaskState(taskId.toString(), Task_TaskState.COMPLETED, rootList);
         }

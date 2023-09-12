@@ -225,7 +225,7 @@ public class EventService {
             e.printStackTrace();
         }
         sseEmitter.onCompletion(() -> {
-            System.out.println("Emitter is Closing...");
+            // DEBUG: System.out.println("Emitter is Closing...");
             emitterList.remove(sseEmitter);
             deleteSubscription(sseEvent.getId());
         });
@@ -336,7 +336,7 @@ public class EventService {
             message.setText(jsonObject.toString());
 
             Transport.send(message);
-            System.out.println("Sent message successfully for Protocol: SMTP");
+            // DEBUG: System.out.println("Sent message successfully for Protocol: SMTP");
         } catch (MessagingException mex) {
             mex.printStackTrace();
         }
@@ -345,7 +345,7 @@ public class EventService {
     public void implementRedfishProtocol(String destination, EventMessage message, String authorization) throws IOException {
         String respString = apiServices.callGETAPI(destination, authorization);
 //        String respString = apiServices.callPOSTAPI(destination, message.toString(), authorization);
-        System.out.println(respString);
+        // DEBUG: System.out.println(respString);
     }
 
     public void createTaskForOperation(OffsetDateTime startTime, Integer newTaskId, String uri) {
