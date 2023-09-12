@@ -57,14 +57,14 @@ public class JWTService {
     public static final long JWT_TOKEN_EXPIRY_TIME = 5 * 60 * 60; // in seconds
 
     public String extractJWTUsername(String jwt) throws IOException, NoSuchAlgorithmException {
-        Key publicKey = readPublicKey(new FileInputStream("src//main//java//com//redfishserver//Redfish_Server//config//certs//publickey.pem"));
+        Key publicKey = readPublicKey(new FileInputStream("src//main//java//org/picmg//redfish_server_template//config//certs//publickey.pem"));
 
         String userName = Jwts.parser().setSigningKey(publicKey).parseClaimsJws(jwt).getBody().getSubject();
         return userName;
     }
 
     public Map<String, Object> extractJWTClaims(String jwt) throws IOException, NoSuchAlgorithmException {
-        Key publicKey = readPublicKey(new FileInputStream("src//main//java//com//redfishserver//Redfish_Server//config//certs//publickey.pem"));
+        Key publicKey = readPublicKey(new FileInputStream("src//main//java//org/picmg//redfish_server_template//config//certs//publickey.pem"));
         Map<String, Object> claims = Jwts.parser().setSigningKey(publicKey).parseClaimsJws(jwt).getBody();
         return claims;
     }
@@ -78,7 +78,7 @@ public class JWTService {
 
     private String buildJWT(Map<String, Object> claims, String subject) throws IOException, NoSuchAlgorithmException {
 
-        Key privateKey = readPrivateKey(new FileInputStream("src//main//java//com//redfishserver//Redfish_Server//config//certs//pkcs8.key"));
+        Key privateKey = readPrivateKey(new FileInputStream("src//main//java//org/picmg//redfish_server_template//config//certs//pkcs8.key"));
 
         return Jwts.builder().setClaims(claims).setSubject(subject)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
