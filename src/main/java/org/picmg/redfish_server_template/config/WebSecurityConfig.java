@@ -53,6 +53,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         http.csrf().disable().authorizeRequests()
                 .antMatchers("/redfish/v1/SessionService/Sessions").permitAll()
                 .antMatchers("/redfish/v1/").permitAll()
+                .antMatchers("/redfish/v1/odata").permitAll()
+                .antMatchers("/redfish/v1/$metadata").permitAll()
                 .antMatchers("/redfish/v1/EventService/SSE").permitAll()
                 .anyRequest().authenticated()
                 .and().sessionManagement()

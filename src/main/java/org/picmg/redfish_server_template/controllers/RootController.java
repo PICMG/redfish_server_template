@@ -26,6 +26,7 @@ import org.picmg.redfish_server_template.RFmodels.AllModels.ActionInfo_Parameter
 import org.picmg.redfish_server_template.RFmodels.AllModels.RedfishError;
 import org.picmg.redfish_server_template.RFmodels.AllModels.ServiceRoot_ServiceRoot;
 import org.picmg.redfish_server_template.RFmodels.custom.MetadataFile;
+import org.picmg.redfish_server_template.RFmodels.custom.OdataFile;
 import org.picmg.redfish_server_template.services.ActionInfoService;
 import org.picmg.redfish_server_template.services.RedfishErrorResponseService;
 import org.picmg.redfish_server_template.services.RootService;
@@ -126,7 +127,7 @@ public class RootController {
         if(metaList.size() ==0)
             // TODO: Add correct Redfish error reporting
             return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Request succeeded, but no content is being returned in the body of the response.");
-        return ResponseEntity.ok().body(metaList.get(0).getData());
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_XML).body(metaList.get(0).getData());
     }
 
     @GetMapping("/odata")
@@ -134,9 +135,9 @@ public class RootController {
         String uri = "/redfish/v1/odata";
         Integer newTaskId = rootService.getTaskId();
         OffsetDateTime startTime = OffsetDateTime.now();
-        List<MetadataFile> odataList = new ArrayList<>();
+        List<OdataFile> odataList = new ArrayList<>();
         try {
-            Future<List<MetadataFile>> resp = rootService.getOdataEntity(startTime, newTaskId);
+            Future<List<OdataFile>> resp = rootService.getOdataEntity(startTime, newTaskId);
             odataList = resp.get(taskWaitTime, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
             // if there has been a timeout, create a task to complete the request asynchronously
@@ -154,7 +155,7 @@ public class RootController {
         if(odataList.size() ==0)
             // TODO: Add correct Redfish error reporting
             return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Request succeeded, but no content is being returned in the body of the response.");
-        return ResponseEntity.ok().body(odataList.get(0).getData());
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(odataList.get(0).getData());
     }
 
 
