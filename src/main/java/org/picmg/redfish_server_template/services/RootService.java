@@ -23,6 +23,10 @@
 package org.picmg.redfish_server_template.services;
 
 import org.picmg.redfish_server_template.RFmodels.AllModels.*;
+import org.picmg.redfish_server_template.RFmodels.custom.MetadataFile;
+import org.picmg.redfish_server_template.RFmodels.custom.OdataFile;
+import org.picmg.redfish_server_template.repository.MetadataFileRepository;
+import org.picmg.redfish_server_template.repository.OdataFileRepository;
 import org.picmg.redfish_server_template.repository.RootServiceRepository;
 import org.picmg.redfish_server_template.repository.SessionService.SessionCollectionRepository;
 import org.picmg.redfish_server_template.repository.SessionService.SessionRepository;
@@ -59,6 +63,12 @@ public class RootService {
 
     @Autowired
     TaskService taskService;
+
+    @Autowired 
+    MetadataFileRepository metadataFileRepository;
+
+    @Autowired
+    OdataFileRepository odataFileRepository;
 
     @PostConstruct
     public void abortAllPreviouslyRunningOperations() {
@@ -113,16 +123,28 @@ public class RootService {
     @Async
     public Future<List<ServiceRoot_ServiceRoot>> getRootData(OffsetDateTime startTime, Integer taskId) throws Exception {
         List<ServiceRoot_ServiceRoot> rootList = rootServiceRepository.findAll();
-        // DEBUG: System.out.println("Pushing Get Root Data to Async Task");
-
-        //TODO: Delaying Service Method by 40 Seconds For Async Demo
-//        Thread.sleep(10000);
-
-        // DEBUG: System.out.println("Async Root Service Complete");
         if( ChronoUnit.SECONDS.between(startTime, OffsetDateTime.now())  > taskWaitTime+1) {
             taskService.updateTaskState(taskId.toString(), Task_TaskState.COMPLETED, rootList);
         }
         return new AsyncResult<List<ServiceRoot_ServiceRoot>>(rootList);
+    }
+
+    @Async
+    public Future<List<MetadataFile>> getMetadataEntity(OffsetDateTime startTime, Integer taskId) throws Exception {
+        List<MetadataFile> list = metadataFileRepository.findAll();
+        if( ChronoUnit.SECONDS.between(startTime, OffsetDateTime.now())  > taskWaitTime+1) {
+            taskService.updateTaskState(taskId.toString(), Task_TaskState.COMPLETED, list);
+        }
+        return new AsyncResult<List<MetadataFile>>(list);
+    }
+
+    @Async
+    public Future<List<OdataFile>> getOdataEntity(OffsetDateTime startTime, Integer taskId) throws Exception {
+        List<OdataFile> list = odataFileRepository.findAll();
+        if( ChronoUnit.SECONDS.between(startTime, OffsetDateTime.now())  > taskWaitTime+1) {
+            taskService.updateTaskState(taskId.toString(), Task_TaskState.COMPLETED, list);
+        }
+        return new AsyncResult<List<OdataFile>>(list);
     }
 
     public void createTaskForOperation(OffsetDateTime startTime, Integer newTaskId, String uri) {
