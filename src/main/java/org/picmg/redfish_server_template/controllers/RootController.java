@@ -40,7 +40,12 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.servlet.view.RedirectView;
+
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.time.OffsetDateTime;
@@ -52,7 +57,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 @RestController
-@RequestMapping("/redfish/v1")
+@RequestMapping("/redfish")
 public class RootController {
 
     @Value("${async.task.retry-time}")
@@ -77,8 +82,23 @@ public class RootController {
     @Autowired
     RedfishErrorResponseService errorResponseService;
 
-
     @GetMapping("/")
+    public RedirectView redirectVersion(RedirectAttributes attributes) {
+        return new RedirectView("/redfish");
+    }
+
+    @GetMapping("/v1")
+    public RedirectView redirectServiceRoot(RedirectAttributes attributes) {
+        return new RedirectView("/redfish/v1/");
+    }
+
+    @GetMapping("")
+    public ResponseEntity<?> getServiceVersion() {
+        String uri = "/redfish";
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body("{\"v1\":\"/redfish/v1/\"}");
+    }
+
+    @GetMapping("/v1/")
     public ResponseEntity<?> getRootEntity() {
         String uri = "/redfish/v1/";
         Integer newTaskId = rootService.getTaskId();
@@ -102,7 +122,8 @@ public class RootController {
         return ResponseEntity.ok().body(rootList.get(0));
     }
 
-    @GetMapping("/$metadata")
+
+    @GetMapping("/v1/$metadata")
     public ResponseEntity<?> getMetadataEntity() {
         String uri = "/redfish/v1/$metadata";
         Integer newTaskId = rootService.getTaskId();
@@ -130,7 +151,7 @@ public class RootController {
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_XML).body(metaList.get(0).getData());
     }
 
-    @GetMapping("/odata")
+    @GetMapping("/v1/odata")
     public ResponseEntity<?> getOdataEntity() {
         String uri = "/redfish/v1/odata";
         Integer newTaskId = rootService.getTaskId();
@@ -159,7 +180,7 @@ public class RootController {
     }
 
 
-    @RequestMapping(value = { "/*/Actions/{resourceType}.{actionName}", "/*/*/Actions/{resourceType}.{actionName}","/*/*/*/Actions/{resourceType}.{actionName}", "/*/*/*/*/Actions/{resourceType}.{actionName}", "/*/*/*/*/*/Actions/{resourceType}.{actionName}"}, method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(value = { "/v1/*/Actions/{resourceType}.{actionName}", "/v1/*/*/Actions/{resourceType}.{actionName}","/v1/*/*/*/Actions/{resourceType}.{actionName}", "/v1/*/*/*/*/Actions/{resourceType}.{actionName}", "/v1/*/*/*/*/*/Actions/{resourceType}.{actionName}"}, method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> postActions(@RequestHeader String authorization, @RequestBody String requestBody, @PathVariable String resourceType, @PathVariable String actionName, HttpServletRequest request) throws Exception {
         String token = authorization.substring(7);
         if (!apiAuthService.isUserAuthenticated(token)){
@@ -238,7 +259,7 @@ public class RootController {
         }
     }
 
-    @RequestMapping(value = { "/*/Actions/{resourceType}.{actionName}", "/*/*/Actions/{resourceType}.{actionName}","/*/*/*/Actions/{resourceType}.{actionName}", "/*/*/*/*/Actions/{resourceType}.{actionName}", "/*/*/*/*/*/Actions/{resourceType}.{actionName}"}, method = RequestMethod.POST)
+    @RequestMapping(value = { "/v1/*/Actions/{resourceType}.{actionName}", "/v1/*/*/Actions/{resourceType}.{actionName}","/v1/*/*/*/Actions/{resourceType}.{actionName}", "/v1/*/*/*/*/Actions/{resourceType}.{actionName}", "/v1/*/*/*/*/*/Actions/{resourceType}.{actionName}"}, method = RequestMethod.POST)
     public ResponseEntity<?> postActions(@RequestHeader String authorization, @PathVariable String resourceType, @PathVariable String actionName,HttpServletRequest request) throws Exception {
         String token = authorization.substring(7);
         if (!apiAuthService.isUserAuthenticated(token)){

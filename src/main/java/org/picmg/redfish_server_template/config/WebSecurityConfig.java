@@ -52,6 +52,9 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity http) throws Exception {
         http.csrf().disable().authorizeRequests()
                 .antMatchers("/redfish/v1/SessionService/Sessions").permitAll()
+                .antMatchers("/redfish").permitAll()
+                .antMatchers("/redfish/").permitAll()
+                .antMatchers("/redfish/v1").permitAll()
                 .antMatchers("/redfish/v1/").permitAll()
                 .antMatchers("/redfish/v1/odata").permitAll()
                 .antMatchers("/redfish/v1/$metadata").permitAll()
