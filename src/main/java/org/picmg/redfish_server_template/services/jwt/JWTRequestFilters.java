@@ -78,6 +78,7 @@ public class JWTRequestFilters extends OncePerRequestFilter {
             e.printStackTrace();
         }
 
+        // otherwise, check for Redfish Authentication
         if(userName!=null && SecurityContextHolder.getContext().getAuthentication()==null) {
             UserDetails userDetails = this.sessionService.loadUserByUsername(userName);
             try {
