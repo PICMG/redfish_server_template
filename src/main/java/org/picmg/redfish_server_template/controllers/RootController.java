@@ -25,6 +25,8 @@ import org.picmg.redfish_server_template.RFmodels.AllModels.ActionInfo_ActionInf
 import org.picmg.redfish_server_template.RFmodels.AllModels.ActionInfo_Parameters;
 import org.picmg.redfish_server_template.RFmodels.AllModels.RedfishError;
 import org.picmg.redfish_server_template.RFmodels.AllModels.ServiceRoot_ServiceRoot;
+import org.picmg.redfish_server_template.RFmodels.custom.MetadataFile;
+import org.picmg.redfish_server_template.RFmodels.custom.OdataFile;
 import org.picmg.redfish_server_template.services.ActionInfoService;
 import org.picmg.redfish_server_template.services.RedfishErrorResponseService;
 import org.picmg.redfish_server_template.services.RootService;
@@ -38,7 +40,12 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.servlet.view.RedirectView;
+
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.time.OffsetDateTime;
@@ -50,7 +57,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 @RestController
-@RequestMapping("/redfish/v1")
+@RequestMapping("/redfish")
 public class RootController {
 
     @Value("${async.task.retry-time}")
@@ -75,9 +82,24 @@ public class RootController {
     @Autowired
     RedfishErrorResponseService errorResponseService;
 
-
     @GetMapping("/")
-    public ResponseEntity<?> getAll() {
+    public RedirectView redirectVersion(RedirectAttributes attributes) {
+        return new RedirectView("/redfish");
+    }
+
+    @GetMapping("/v1")
+    public RedirectView redirectServiceRoot(RedirectAttributes attributes) {
+        return new RedirectView("/redfish/v1/");
+    }
+
+    @GetMapping("")
+    public ResponseEntity<?> getServiceVersion() {
+        String uri = "/redfish";
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body("{\"v1\":\"/redfish/v1/\"}");
+    }
+
+    @GetMapping("/v1/")
+    public ResponseEntity<?> getRootEntity() {
         String uri = "/redfish/v1/";
         Integer newTaskId = rootService.getTaskId();
         OffsetDateTime startTime = OffsetDateTime.now();
@@ -101,7 +123,64 @@ public class RootController {
     }
 
 
-    @RequestMapping(value = { "/*/Actions/{resourceType}.{actionName}", "/*/*/Actions/{resourceType}.{actionName}","/*/*/*/Actions/{resourceType}.{actionName}", "/*/*/*/*/Actions/{resourceType}.{actionName}", "/*/*/*/*/*/Actions/{resourceType}.{actionName}"}, method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping("/v1/$metadata")
+    public ResponseEntity<?> getMetadataEntity() {
+        String uri = "/redfish/v1/$metadata";
+        Integer newTaskId = rootService.getTaskId();
+        OffsetDateTime startTime = OffsetDateTime.now();
+        List<MetadataFile> metaList = new ArrayList<>();
+        try {
+            Future<List<MetadataFile>> resp = rootService.getMetadataEntity(startTime, newTaskId);
+            metaList = resp.get(taskWaitTime, TimeUnit.SECONDS);
+        } catch (TimeoutException e) {
+            // if there has been a timeout, create a task to complete the request asynchronously
+            HttpHeaders responseHeaders = new HttpHeaders();
+            responseHeaders.set("Location", rootService.getTaskServiceURI(newTaskId.toString()));
+            responseHeaders.set("Retry-After", taskRetryTime + " seconds");
+            rootService.createTaskForOperation(startTime, newTaskId, uri);
+            return ResponseEntity.status(HttpStatus.ACCEPTED).headers(responseHeaders).body(rootService.getTaskResource(newTaskId.toString()));
+        } catch (Exception e) {
+            // all other exceptions
+            // TODO: Add correct Redfish error reporting
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(String.format("Request could not be processed because it contains invalid information"));
+        }
+        if(metaList.size() ==0)
+            // TODO: Add correct Redfish error reporting
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Request succeeded, but no content is being returned in the body of the response.");
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_XML).body(metaList.get(0).getData());
+    }
+
+    @GetMapping("/v1/odata")
+    public ResponseEntity<?> getOdataEntity() {
+        String uri = "/redfish/v1/odata";
+        Integer newTaskId = rootService.getTaskId();
+        OffsetDateTime startTime = OffsetDateTime.now();
+        List<OdataFile> odataList = new ArrayList<>();
+        try {
+            Future<List<OdataFile>> resp = rootService.getOdataEntity(startTime, newTaskId);
+            odataList = resp.get(taskWaitTime, TimeUnit.SECONDS);
+        } catch (TimeoutException e) {
+            // if there has been a timeout, create a task to complete the request asynchronously
+            HttpHeaders responseHeaders = new HttpHeaders();
+            responseHeaders.set("Location", rootService.getTaskServiceURI(newTaskId.toString()));
+            responseHeaders.set("Retry-After", taskRetryTime + " seconds");
+            rootService.createTaskForOperation(startTime, newTaskId, uri);
+            return ResponseEntity.status(HttpStatus.ACCEPTED).headers(responseHeaders).body(rootService.getTaskResource(newTaskId.toString()));
+        } catch (Exception e) {
+            // all other exceptions
+            // TODO: Add correct Redfish error reporting
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(String.format("Request could not be processed because it contains invalid information"));
+        }
+        if(odataList.size() ==0)
+            // TODO: Add correct Redfish error reporting
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Request succeeded, but no content is being returned in the body of the response.");
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(odataList.get(0).getData());
+    }
+
+
+    @RequestMapping(value = { "/v1/*/Actions/{resourceType}.{actionName}", "/v1/*/*/Actions/{resourceType}.{actionName}","/v1/*/*/*/Actions/{resourceType}.{actionName}", "/v1/*/*/*/*/Actions/{resourceType}.{actionName}", "/v1/*/*/*/*/*/Actions/{resourceType}.{actionName}"}, method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> postActions(@RequestHeader String authorization, @RequestBody String requestBody, @PathVariable String resourceType, @PathVariable String actionName, HttpServletRequest request) throws Exception {
         String token = authorization.substring(7);
         if (!apiAuthService.isUserAuthenticated(token)){
@@ -180,7 +259,7 @@ public class RootController {
         }
     }
 
-    @RequestMapping(value = { "/*/Actions/{resourceType}.{actionName}", "/*/*/Actions/{resourceType}.{actionName}","/*/*/*/Actions/{resourceType}.{actionName}", "/*/*/*/*/Actions/{resourceType}.{actionName}", "/*/*/*/*/*/Actions/{resourceType}.{actionName}"}, method = RequestMethod.POST)
+    @RequestMapping(value = { "/v1/*/Actions/{resourceType}.{actionName}", "/v1/*/*/Actions/{resourceType}.{actionName}","/v1/*/*/*/Actions/{resourceType}.{actionName}", "/v1/*/*/*/*/Actions/{resourceType}.{actionName}", "/v1/*/*/*/*/*/Actions/{resourceType}.{actionName}"}, method = RequestMethod.POST)
     public ResponseEntity<?> postActions(@RequestHeader String authorization, @PathVariable String resourceType, @PathVariable String actionName,HttpServletRequest request) throws Exception {
         String token = authorization.substring(7);
         if (!apiAuthService.isUserAuthenticated(token)){
