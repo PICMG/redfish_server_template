@@ -60,20 +60,7 @@ public class JWTRequestFilters extends OncePerRequestFilter {
             if(authHeader != null && authHeader.startsWith("Bearer")) {
                 jwt = authHeader.substring(7);
                 userName = jwtService.extractJWTUsername(jwt);
-            } else if(authHeader != null && authHeader.startsWith("Basic")) {
-                String creds = authHeader.substring("Basic".length()).trim();
-                byte[] credsDecoded = Base64.getDecoder().decode(creds);
-                String credString = new String(credsDecoded, StandardCharsets.UTF_8);
-                userName = credString.substring(0,credString.indexOf(':'));
-                userPassword = credString.substring(userName.length()+1);
-                UserDetails userDetails = this.sessionService.loadUserByUsername(userName);
-                if (userDetails.getPassword().equals(userPassword) && userDetails.isEnabled() &&
-                        userDetails.isAccountNonLocked() && userDetails.isAccountNonExpired() &&
-                        userDetails.isCredentialsNonExpired()) {
-                    // here if password was authenticated
-
-                }
-            }
+            } 
         } catch (Exception e) {
             e.printStackTrace();
         }
