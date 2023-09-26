@@ -28,12 +28,14 @@ import org.picmg.redfish_server_template.repository.SessionService.SessionReposi
 import org.picmg.redfish_server_template.repository.SessionService.SessionCollectionRepository;
 import org.picmg.redfish_server_template.repository.SessionService.SessionServiceRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 @Service
@@ -57,6 +59,8 @@ public class SessionService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         ManagerAccount_ManagerAccount userAccount = accountRepository.getByUserName(username);
+        if (userAccount == null) throw(new UsernameNotFoundException("Username not found"));
+        // create a new UserDetail with the username and password for the user
         return new User(userAccount.getUserName(), userAccount.getPassword().get(), new ArrayList<>());
     }
 
