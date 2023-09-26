@@ -50,18 +50,30 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        http.csrf().disable().authorizeRequests()
-                .antMatchers("/redfish/v1/SessionService/Sessions").permitAll()
-                .antMatchers("/redfish").permitAll()
-                .antMatchers("/redfish/").permitAll()
-                .antMatchers("/redfish/v1").permitAll()
-                .antMatchers("/redfish/v1/").permitAll()
-                .antMatchers("/redfish/v1/odata").permitAll()
-                .antMatchers("/redfish/v1/$metadata").permitAll()
-                .antMatchers("/redfish/v1/EventService/SSE").permitAll()
-                .anyRequest().authenticated()
-                .and().sessionManagement()
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+        http
+                .csrf((csrf) ->
+                        csrf.disable()
+                )
+                .authorizeHttpRequests((authorizeHttpRequests) ->
+                        authorizeHttpRequests
+                                .antMatchers("/redfish/v1/SessionService/Sessions").permitAll()
+                                .antMatchers("/redfish").permitAll()
+                                .antMatchers("/redfish/").permitAll()
+                                .antMatchers("/redfish/v1").permitAll()
+                                .antMatchers("/redfish/v1/").permitAll()
+                                .antMatchers("/redfish/v1/odata").permitAll()
+                                .antMatchers("/redfish/v1/$metadata").permitAll()
+                                .antMatchers("/redfish/v1/EventService/SSE").permitAll()
+                                .anyRequest().authenticated()
+                )
+                .httpBasic((configureHttpBasic) ->
+                        configureHttpBasic.realmName("/redfish/v1/")
+                )
+                .sessionManagement((sessionManagement) ->
+                        sessionManagement
+                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                );
+
         http.addFilterBefore(jwtRequestFilters, UsernamePasswordAuthenticationFilter.class);
     }
     @Bean
