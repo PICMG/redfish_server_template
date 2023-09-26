@@ -36,6 +36,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 
 @Component
 public class JWTRequestFilters extends OncePerRequestFilter {
@@ -62,6 +64,7 @@ public class JWTRequestFilters extends OncePerRequestFilter {
             e.printStackTrace();
         }
 
+        // otherwise, check for Redfish Authentication
         if(userName!=null && SecurityContextHolder.getContext().getAuthentication()==null) {
             UserDetails userDetails = this.sessionService.loadUserByUsername(userName);
             try {
