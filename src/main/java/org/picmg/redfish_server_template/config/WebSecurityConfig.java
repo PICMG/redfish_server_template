@@ -66,9 +66,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                                 .antMatchers("/redfish/v1/EventService/SSE").permitAll()
                                 .anyRequest().authenticated()
                 )
-                .formLogin((formLogin)->
-                        formLogin
-                                .permitAll()
+                .httpBasic((configureHttpBasic) ->
+                        configureHttpBasic.realmName("/redfish/v1/")
                 )
                 .sessionManagement((sessionManagement) ->
                         sessionManagement
