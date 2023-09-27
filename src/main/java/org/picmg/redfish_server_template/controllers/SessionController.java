@@ -99,19 +99,20 @@ public class SessionController {
     }
 
     @GetMapping (value="/Sessions/{id}")
-    public ResponseEntity<?> Session(@RequestHeader String authorization, @PathVariable("id") String id) throws Exception {
-        String token = authorization.substring(7);
+    public ResponseEntity<?> Session(@RequestHeader(value="Authorization", required=false) String authorization, @PathVariable("id") String id) throws Exception {
+/*        String token = authorization.substring(7);
         if (!apiAuthService.isUserAuthenticated(token)){
             return ResponseEntity.badRequest().body(errorResponseService.getNoValidSessionErrorResponse());
         }
         if(!apiAuthService.isUserAuthorizedForOperationType(token, "Session", "GET")) {
             return ResponseEntity.internalServerError().body(errorResponseService.getInsufficientPrivilegeErrorResponse());
         }
+*/
         //SessionV140Session session = sessionService.getSessionById(id);
         return ResponseEntity.ok().body(sessionService.getSessionById(id));
     }
     @RequestMapping(value="/Sessions", method=RequestMethod.PATCH, consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> updateSession(@RequestBody Session_Session session, @RequestHeader String authorization) throws Exception {
+    public ResponseEntity<?> updateSession(@RequestBody Session_Session session, @RequestHeader(value="Authorization", required=false) String authorization) throws Exception {
 
         String token = authorization.substring(7);
         Boolean isUserAuthenticated = apiAuthService.isUserAuthenticated(token);
@@ -133,7 +134,7 @@ public class SessionController {
     }
 
     @RequestMapping(value="", method=RequestMethod.PATCH, consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> updateSessionService(@RequestBody SessionService_SessionService sessionService1, @RequestHeader String authorization) throws Exception {
+    public ResponseEntity<?> updateSessionService(@RequestBody SessionService_SessionService sessionService1, @RequestHeader(value="Authorization", required=false) String authorization) throws Exception {
 
         String token = authorization.substring(7);
         Boolean isUserAuthenticated = apiAuthService.isUserAuthenticated(token);
@@ -152,8 +153,8 @@ public class SessionController {
     }
 
     @RequestMapping(value = "/Sessions/{id}", method = RequestMethod.DELETE)
-    public ResponseEntity<?> deleteSession(@RequestHeader String authorization, @PathVariable("id") String id) throws Exception {
-        String token = authorization.substring(7);
+    public ResponseEntity<?> deleteSession(@RequestHeader(value="Authorization", required=false) String authorization, @PathVariable("id") String id) throws Exception {
+/*        String token = authorization.substring(7);
         Boolean isUserAuthenticated = apiAuthService.isUserAuthenticated(token);
         if (!isUserAuthenticated){
             return ResponseEntity.badRequest().body(errorResponseService.getNoValidSessionErrorResponse());
@@ -163,6 +164,7 @@ public class SessionController {
         if(!isAPIAuthorized) {
             return ResponseEntity.internalServerError().body(errorResponseService.getInsufficientPrivilegeErrorResponse());
         }
+*/
         if(id == null)
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("ID cannot be null");
         sessionService.deleteMemberFromSessionCollection(id);
@@ -173,8 +175,8 @@ public class SessionController {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Session not found");
     }
     @RequestMapping(value="/Sessions", method=RequestMethod.GET)
-    public ResponseEntity<?> getSessionCollection(@RequestHeader String authorization) throws Exception {
-        String token = authorization.substring(7);
+    public ResponseEntity<?> getSessionCollection(@RequestHeader(value="Authorization", required=false) String authorization) throws Exception {
+/*        String token = authorization.substring(7);
         Boolean isUserAuthenticated = apiAuthService.isUserAuthenticated(token);
         if (!isUserAuthenticated){
             return ResponseEntity.badRequest().body(errorResponseService.getNoValidSessionErrorResponse());
@@ -184,12 +186,13 @@ public class SessionController {
         if(!isAPIAuthorized) {
             return ResponseEntity.badRequest().body(errorResponseService.getInsufficientPrivilegeErrorResponse());
         }
+*/
         return ResponseEntity.ok().body(sessionService.getSessionCollection());
     }
 
     @RequestMapping(value="", method=RequestMethod.GET)
-    public ResponseEntity<?> getSessionService(@RequestHeader String authorization) throws Exception {
-        String token = authorization.substring(7);
+    public ResponseEntity<?> getSessionService(@RequestHeader(value="Authorization", required=false) String authorization) throws Exception {
+/*        String token = authorization.substring(7);
         Boolean isUserAuthenticated = apiAuthService.isUserAuthenticated(token);
         if (!isUserAuthenticated){
             return ResponseEntity.badRequest().body(errorResponseService.getNoValidSessionErrorResponse());
@@ -199,7 +202,7 @@ public class SessionController {
         if(!isAPIAuthorized) {
             return ResponseEntity.internalServerError().body(errorResponseService.getInsufficientPrivilegeErrorResponse());
         }
-
+*/
         return ResponseEntity.ok().body(sessionService.getSessionService());
 
     }
