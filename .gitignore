@@ -1,1 +1,6 @@
 target/**
+/src/main/java/org/picmg/redfish_server_template/RFmodels/AllModels/**
+/src/main/java/org/picmg/redfish_server_template/config/converters/**
+/src/main/java/org/picmg/redfish_server_template/config/certs/**
+/src/main/java/org/picmg/redfish_server_template/RFmodels/*.yaml
+.idea/**

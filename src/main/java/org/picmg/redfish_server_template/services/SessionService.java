@@ -24,11 +24,13 @@ package org.picmg.redfish_server_template.services;
 
 import org.picmg.redfish_server_template.RFmodels.AllModels.*;
 import org.picmg.redfish_server_template.repository.AccountService.AccountRepository;
+import org.picmg.redfish_server_template.repository.RolesRepository;
 import org.picmg.redfish_server_template.repository.SessionService.SessionRepository;
 import org.picmg.redfish_server_template.repository.SessionService.SessionCollectionRepository;
 import org.picmg.redfish_server_template.repository.SessionService.SessionServiceRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -52,6 +54,9 @@ public class SessionService implements UserDetailsService {
     @Autowired
     SessionRepository sessionRepository;
 
+    @Autowired
+    RolesRepository rolesRepository;
+
     public ManagerAccount_ManagerAccount validateUser(String UserName) {
         return accountRepository.getByUserName(UserName);
     }
@@ -60,8 +65,46 @@ public class SessionService implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         ManagerAccount_ManagerAccount userAccount = accountRepository.getByUserName(username);
         if (userAccount == null) throw(new UsernameNotFoundException("Username not found"));
+
+        // check to see if this is a redfish account
+        if (userAccount.getAccountTypes() != null) {
+            if (!userAccount.getAccountTypes().isEmpty()) {
+                if (!userAccount.getAccountTypes().contains(ManagerAccountAccountTypes.REDFISH)) {
+                    // account does not support Redfish login
+                    throw (new UsernameNotFoundException("Username not found"));
+                }
+            }
+        }
+
+        // create the authorization list for this user
+        String rid = userAccount.getRoleId();
+        ArrayList<GrantedAuthority> p_list = new ArrayList<GrantedAuthority>();
+        if (rid != null && !rid.isEmpty()) {
+            // here the user has been assigned a role id - check the roles db to get the privileges
+            Role_Role r_entry = rolesRepository.getById(rid);
+            if (r_entry != null) {
+                // here if there is a matching Role in the Roles table
+                // add the standard and oem privileges
+                if (r_entry.getAssignedPrivileges() != null) {
+                    for (PrivilegesPrivilegeType r: r_entry.getAssignedPrivileges()) {
+                        p_list.add(new SimpleGrantedAuthority(r.toString()));
+                    }
+                }
+                if (r_entry.getOemPrivileges() != null) {
+                    for (String s: r_entry.getOemPrivileges()) {
+                        p_list.add(new SimpleGrantedAuthority(s));
+                    }
+                }
+            }
+        }
         // create a new UserDetail with the username and password for the user
-        return new User(userAccount.getUserName(), userAccount.getPassword().get(), new ArrayList<>());
+        return new User(userAccount.getUserName(),
+                userAccount.getPassword().get(),
+                userAccount.getEnabled(),
+                true,
+                true,
+                !userAccount.getLocked(),
+                p_list);
     }
 
     public Session_Session getSessionById(String id) {

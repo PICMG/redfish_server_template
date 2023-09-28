@@ -23,6 +23,10 @@ package org.picmg.redfish_server_template.controllers;
 
 import org.picmg.redfish_server_template.RFmodels.AllModels.*;
 import org.picmg.redfish_server_template.dto.AccountDTO;
+import org.picmg.redfish_server_template.repository.AccountService.AccountServiceRepository;
+import org.picmg.redfish_server_template.repository.AccountService.ManagerAccountCollectionRepository;
+import org.picmg.redfish_server_template.repository.AccountService.RoleCollectionRepository;
+import org.picmg.redfish_server_template.repository.RolesRepository;
 import org.picmg.redfish_server_template.services.AccountService;
 import org.picmg.redfish_server_template.services.QueryParameterService;
 import org.picmg.redfish_server_template.services.RedfishErrorResponseService;
@@ -72,6 +76,17 @@ public class AccountController {
     @Autowired
     RedfishErrorResponseService redfishErrorResponseService;
 
+    @Autowired
+    AccountServiceRepository accountServiceRepository;
+
+    @Autowired
+    ManagerAccountCollectionRepository managerAccountCollectionRepository;
+
+    @Autowired
+    RoleCollectionRepository roleCollectionRepository;
+
+    @Autowired
+    RolesRepository rolesRepository;
 
     private ManagerAccount_ManagerAccount hideAccountDetailsInResponse(ManagerAccount_ManagerAccount account) {
         account.setPassword(null);
@@ -85,93 +100,19 @@ public class AccountController {
     }
 
     @GetMapping
-    public ResponseEntity<?> getAccountServices(@RequestHeader String authorization) {
-        String uri = "/redfish/v1/";
-        Integer newTaskId = accountService.getTaskId();
-        OffsetDateTime startTime = OffsetDateTime.now();
-        if(!apiAuthService.isUserAuthorizedForOperationType(authorization.substring(7), controllerEntityName, "GET")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Service recognized the credentials in the request but those credentials do not possess" +
-                    "authorization to complete this request.");
-        }
-        List<AccountService_AccountService> accountService_accountServiceList = null;
-        Future<List<AccountService_AccountService>> resp = accountService.getALllAccounts(startTime, newTaskId);
-        try {
-            accountService_accountServiceList = resp.get(taskWaitTime, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        } catch (ExecutionException e) {
-            throw new RuntimeException(e);
-        } catch (TimeoutException e) {
-            HttpHeaders responseHeaders = new HttpHeaders();
-            responseHeaders.set("Location", accountService.getTaskServiceURI(newTaskId.toString()));
-            responseHeaders.set("Retry-After", taskRetryTime + " seconds");
-            accountService.createTaskForOperation(startTime, newTaskId, uri);
-            return ResponseEntity.status(HttpStatus.ACCEPTED).headers(responseHeaders).body(accountService.getTaskResource(newTaskId.toString()));
-        }
-        return ResponseEntity.ok(accountService_accountServiceList);
+    public ResponseEntity<?> getAccountServices() {
+        String uri = "/redfish/v1/AccountService";
+        return ResponseEntity.ok(accountServiceRepository.findFirstByOdataId(uri));
     }
 
-    @GetMapping("/Account")
-    public ResponseEntity<?> getAll(@RequestHeader String authorization, @RequestParam Map<String, String> params) throws IOException {
-        if(!apiAuthService.isUserAuthorizedForOperationType(authorization.substring(7), controllerEntityName, "GET")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Service recognized the credentials in the request but those credentials do not possess" +
-                    "authorization to complete this request.");
-        }
-        List<ManagerAccount_ManagerAccount> objectList = null;
-        Integer paramsVal = 0;
-        if(params.isEmpty()) {
-            objectList = hideAccountDetailsListInResponse(accountService.getAllAccountDetails());
-            return ResponseEntity.ok().body(objectList);
-        }
-        else {
-            if(params.containsKey("$top")) {
-                try {
-                    paramsVal = Integer.parseInt(params.get("$top"));
-                    if(params.get("$top") == null || params.get("$top") == "") {
-                        throw new Exception("params value is empty");
-                    }
-                    objectList = hideAccountDetailsListInResponse(accountService.getAllAccountDetails());
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Querying is not supported on the requested resource.");
-                }
-                List<Object > responseList = queryParameterService.getTopQueryParameterResult(Collections.singletonList(objectList), paramsVal);
-                if(responseList.size()==0)
-                    return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Request succeeded, but no content is being returned in the body of the response.");
-                return ResponseEntity.ok().body(responseList);
-            }
-            else if(params.containsKey("$skip")) {
-                try {
-                    paramsVal = Integer.parseInt(params.get("$skip"));
-                    if(params.get("$skip") == null || params.get("$skip") == "") {
-                        throw new Exception("params value is empty");
-                    }
-                    objectList = hideAccountDetailsListInResponse(accountService.getAllAccountDetails());
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Querying is not supported on the requested resource.");
-                }
-                List<Object > responseList = queryParameterService.getSkippedQueryParameterResult(Collections.singletonList(objectList), paramsVal);
-                if(responseList.size()==0)
-                    return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Request succeeded, but no content is being returned in the body of the response.");
-                return ResponseEntity.ok().body(responseList);
-            }
-            else if(params.containsKey("only")) {
-                if(objectList.size()==1)
-                    return ResponseEntity.ok().body(objectList.get(0));
-                return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Request succeeded, but no content is being returned in the body of the response.");
-            } else {
-                return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).body("Querying is not supported by the implementation.");
-            }
-        }
+    @GetMapping("/Accounts")
+    public ResponseEntity<?> getAccounts(@RequestParam Map<String, String> params) throws IOException {
+        String uri = "/redfish/v1/AccountService/Accounts";
+        return ResponseEntity.ok(managerAccountCollectionRepository.findFirstByOdataId(uri));
     }
 
-    @RequestMapping(value="/Account", method=RequestMethod.DELETE, consumes = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(value="/Accounts", method=RequestMethod.DELETE, consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> deleteData(@RequestBody ManagerAccount_ManagerAccount account, @RequestHeader String authorization) {
-        if(!apiAuthService.isUserAuthorizedForOperationType(authorization.substring(7), controllerEntityName, "DELETE")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Service recognized the credentials in the request but those credentials do not possess" +
-                    "authorization to complete this request.");
-        }
         try {
             if(accountService.deleteAccount(account))
                 return ResponseEntity.ok(account);
@@ -182,23 +123,13 @@ public class AccountController {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(String.format("Request could not be processed because it contains invalid information"));
     }
 
-    @RequestMapping(value="/Account", method=RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(value="/Accounts", method=RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> addAccount(@RequestBody ManagerAccount_ManagerAccount account, @RequestHeader String authorization) {
-//    public ResponseEntity<?> addAccount(@RequestBody AccountDTO account, @RequestHeader String authorization) {
-        if(!apiAuthService.isUserAuthorizedForOperationType(authorization.substring(7), controllerEntityName, "POST")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Service recognized the credentials in the request but those credentials do not possess" +
-                    "authorization to complete this request.");
-        }
-        String uri = "/redfish/v1/AccountService/Account";
+        String uri = "/redfish/v1/AccountService/Accounts";
         Integer newTaskId = accountService.getTaskId();
         OffsetDateTime startTime = OffsetDateTime.now();
         Boolean accountCreated =  false;
         ManagerAccount_ManagerAccount userAccount = new ManagerAccount_ManagerAccount();
-//        userAccount.userName(account.getUserName());
-//        userAccount.password(account.getPassword());
-//        userAccount.roleId(account.getRoleId());
-//        userAccount.enabled(account.getEnabled());
-//        userAccount.locked(account.getLocked());
         userAccount = account;
         try {
             Future<Boolean> resp = accountService.addAccount(startTime, newTaskId, userAccount);
@@ -224,15 +155,10 @@ public class AccountController {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Request could not be processed because it contains invalid information");
     }
 
-    @GetMapping("/Account/{ID}")
+    @GetMapping("/Accounts/{ID}")
     @ResponseBody
-    public ResponseEntity<?> findAccountById(@PathVariable String ID, @RequestHeader String authorization) {
-        if(!apiAuthService.isUserAuthorizedForOperationType(authorization.substring(7), controllerEntityName, "GET")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Service recognized the credentials in the request but those credentials do not possess" +
-                    "authorization to complete this request.");
-        }
+    public ResponseEntity<?> findAccountById(@PathVariable String ID) {
         try {
-            Integer int_id = Integer.parseInt(ID);
             ManagerAccount_ManagerAccount userAccount = hideAccountDetailsInResponse(accountService.getAccountById(ID));
             return ResponseEntity.status(HttpStatus.OK).body(userAccount);
         } catch (ChangeSetPersister.NotFoundException e) {
@@ -244,14 +170,10 @@ public class AccountController {
         }
     }
 
-    @PatchMapping("/Account")
+    @PatchMapping("/Accounts")
     @ResponseBody
     public ResponseEntity<?> updateAccountByUserName(@RequestBody ManagerAccount_ManagerAccount account, @RequestHeader String authorization) {
-        if(!apiAuthService.isUserAuthorizedForOperationType(authorization.substring(7), controllerEntityName, "PATCH")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Service recognized the credentials in the request but those credentials do not possess" +
-                    "authorization to complete this request.");
-        }
-        String uri = "/redfish/v1/AccountService/Account";
+        String uri = "/redfish/v1/AccountService/Accounts";
         Integer newTaskId = accountService.getTaskId();
         OffsetDateTime startTime = OffsetDateTime.now();
         Boolean accountUpdated =  false;
@@ -283,67 +205,22 @@ public class AccountController {
     @GetMapping("/Roles")
     @ResponseBody
     public ResponseEntity<?> getRoleCollection(@RequestHeader String authorization) {
-        if(!apiAuthService.isUserAuthorizedForOperationType(authorization.substring(7), controllerEntityName, "GET")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Service recognized the credentials in the request but those credentials do not possess" +
-                    "authorization to complete this request.");
-        }
         String uri = "/redfish/v1/AccountService/Roles";
-        Integer newTaskId = accountService.getTaskId();
-        OffsetDateTime startTime = OffsetDateTime.now();
-        RoleCollection roleCollection = null;
-        try {
-            Future<RoleCollection> resp = accountService.roleCollection(startTime, newTaskId);
-            roleCollection = resp.get(taskWaitTime, TimeUnit.SECONDS);
-        }  catch (TimeoutException e) {
-            HttpHeaders responseHeaders = new HttpHeaders();
-            responseHeaders.set("Location", accountService.getTaskServiceURI(newTaskId.toString()));
-            responseHeaders.set("Retry-After", taskRetryTime + " seconds");
-            accountService.createTaskForOperation(startTime, newTaskId, uri);
-            return ResponseEntity.status(HttpStatus.ACCEPTED).headers(responseHeaders).body(accountService.getTaskResource(newTaskId.toString()));
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(String.format("Request could not be processed because it contains invalid information"));
-        }
-        return ResponseEntity.status(HttpStatus.OK).body(roleCollection);
+        return ResponseEntity.status(HttpStatus.OK).body(roleCollectionRepository.findFirstByOdataId(uri));
     }
 
     @GetMapping("/Roles/{Id}")
     @ResponseBody
-    public ResponseEntity<?> getRole(@PathVariable String Id, @RequestHeader String authorization) {
-        if(!apiAuthService.isUserAuthorizedForOperationType(authorization.substring(7), controllerEntityName, "GET")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Service recognized the credentials in the request but those credentials do not possess" +
-                    "authorization to complete this request.");
-        }
-        String uri = "/redfish/v1/AccountService/Roles/"+Id;
-        Integer newTaskId = accountService.getTaskId();
-        OffsetDateTime startTime = OffsetDateTime.now();
-        Role_Role userRoles = null;
-        try {
-            Future<Role_Role> resp = accountService.getRole(startTime, newTaskId, Id);
-            userRoles = resp.get(taskWaitTime, TimeUnit.SECONDS);
-        } catch (TimeoutException e) {
-            HttpHeaders responseHeaders = new HttpHeaders();
-            responseHeaders.set("Location", accountService.getTaskServiceURI(newTaskId.toString()));
-            responseHeaders.set("Retry-After", taskRetryTime + " seconds");
-            accountService.createTaskForOperation(startTime, newTaskId, uri);
-            return ResponseEntity.status(HttpStatus.ACCEPTED).headers(responseHeaders).body(accountService.getTaskResource(newTaskId.toString()));
-        } catch (ChangeSetPersister.NotFoundException e) {
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Request succeeded, but no content is being returned in the body of the response.");
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Request could not be processed because it contains invalid information");
-        }
-        return ResponseEntity.status(HttpStatus.OK).body(userRoles);
+    public ResponseEntity<?> getRole(@PathVariable String Id) {
+        String uri = "/redfish/v1/AccountService/Roles/" + Id;
+        Role_Role role = rolesRepository.getByOdataId(uri);
+        // TODO handle not found;
+        return ResponseEntity.status(HttpStatus.OK).body(role);
     }
 
     @GetMapping("/ExternalAccountProviders")
     @ResponseBody
     public ResponseEntity<?> getAccountProviders(@RequestHeader String authorization) {
-        if(!apiAuthService.isUserAuthorizedForOperationType(authorization.substring(7), controllerEntityName, "GET")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Service recognized the credentials in the request but those credentials do not possess" +
-                    "authorization to complete this request.");
-        }
         String uri = "/redfish/v1/AccountService/ExternalAccountProviders";
         Integer newTaskId = accountService.getTaskId();
         OffsetDateTime startTime = OffsetDateTime.now();

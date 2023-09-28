@@ -22,7 +22,11 @@
 package org.picmg.redfish_server_template.repository.AccountService;
 
 import org.picmg.redfish_server_template.RFmodels.AllModels.AccountService_AccountService;
+import org.picmg.redfish_server_template.RFmodels.AllModels.ManagerAccount_ManagerAccount;
 import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.mongodb.repository.Query;
 
 public interface AccountServiceRepository extends MongoRepository<AccountService_AccountService, Object> {
+    @Query(value="{ '_odata_id': ?0 }", fields="{ '_id': 0, '_odata_id': 0}")
+    AccountService_AccountService findFirstByOdataId(String id);
 }

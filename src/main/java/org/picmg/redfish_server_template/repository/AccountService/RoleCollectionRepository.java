@@ -1,7 +1,7 @@
 //******************************************************************************************************
-// RolesRepository.java
+// AccountServiceRepository.java
 //
-// Interface for RolesRepository.
+// Repository for AccountServices.
 //
 //Copyright (C) 2022, PICMG.
 //
@@ -19,20 +19,14 @@
 //        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //*******************************************************************************************************
 
+package org.picmg.redfish_server_template.repository.AccountService;
 
-package org.picmg.redfish_server_template.repository;
-
-import org.picmg.redfish_server_template.RFmodels.AllModels.Role_Role;
+import org.picmg.redfish_server_template.RFmodels.AllModels.AccountService_AccountService;
+import org.picmg.redfish_server_template.RFmodels.AllModels.RoleCollection;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
 
-import java.util.List;
-
-public interface RolesRepository extends MongoRepository<Role_Role, Object> {
-    @Query(value="{ 'Id': ?0 }", fields="{ '_id': 0, '_odata_id': 0}")
-    Role_Role getById(String Id);
-
+public interface RoleCollectionRepository extends MongoRepository<RoleCollection, Object> {
     @Query(value="{ '_odata_id': ?0 }", fields="{ '_id': 0, '_odata_id': 0}")
-    Role_Role getByOdataId(String Id);
-
+    RoleCollection findFirstByOdataId(String id);
 }
