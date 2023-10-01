@@ -1,5 +1,8 @@
 package org.picmg.redfish_server_template.config;
 
+import org.picmg.redfish_server_template.RFmodels.custom.PrivilegeTableEntry;
+import org.picmg.redfish_server_template.repository.AccountService.PrivilegeTableRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authorization.AuthorizationDecision;
 import org.springframework.security.authorization.AuthorizationManager;
@@ -10,9 +13,13 @@ import org.springframework.security.web.access.intercept.RequestAuthorizationCon
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Collection;
+import java.util.List;
 import java.util.function.Supplier;
 
 public class RedfishAuthorizationManager implements AuthorizationManager<RequestAuthorizationContext> {
+    @Autowired
+    PrivilegeTableRepository privilegeTableRepository;
+
     @Override
     public void verify(Supplier<Authentication> authentication, RequestAuthorizationContext object) {
         AuthorizationDecision decision = check(authentication, object);
@@ -28,19 +35,16 @@ public class RedfishAuthorizationManager implements AuthorizationManager<Request
         // get the authorities for the authenticated user
         Collection<? extends GrantedAuthority> authorities = authentication.get().getAuthorities();
         if (authorities.isEmpty()) return new AuthorizationDecision(false);
-        boolean result = false;
-        for (GrantedAuthority grantedAuthority: authorities) {
-            // unauthenticated users will have a granted authority of ANONYMOUS
-            if (grantedAuthority.getAuthority().equals("ROLE_ANONYMOUS")) continue;
 
-            // here the authority needs to be checked against the privilege level for the redfish model
-            // located at the url being accessed.
-            result = true;
-            String method = object.getRequest().getMethod();
-            String localAddress = object.getRequest().getLocalAddr();
-            String uri = object.getRequest().getRequestURI();
-            break;
+        String method = object.getRequest().getMethod();
+        String localAddress = object.getRequest().getLocalAddr();
+        String uri = object.getRequest().getRequestURI();
+
+        List<PrivilegeTableEntry> x = privilegeTableRepository.findAll();
+        for (PrivilegeTableEntry entry: x) {
+            if (!entry.isMatchingUrl(uri)) continue;
+            if (entry.isAuthorized(method, authorities)) new AuthorizationDecision(true);
         }
-        return new AuthorizationDecision(result);
+        return new AuthorizationDecision(false);
     }
 }
