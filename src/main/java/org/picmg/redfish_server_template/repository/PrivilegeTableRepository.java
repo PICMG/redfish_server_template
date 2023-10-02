@@ -1,7 +1,7 @@
 //******************************************************************************************************
-// PrivilegeRegistry.java
+// AccountRepository.java
 //
-// privilege registry service file.
+// Repository for account.
 //
 //Copyright (C) 2022, PICMG.
 //
@@ -20,23 +20,15 @@
 //*******************************************************************************************************
 
 
-package org.picmg.redfish_server_template.services.apiAuth;
+package org.picmg.redfish_server_template.repository;
 
-import org.picmg.redfish_server_template.RFmodels.AllModels.PrivilegeRegistry_PrivilegeRegistry;
-import org.picmg.redfish_server_template.repository.PrivilegeRegistryRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
+import org.picmg.redfish_server_template.RFmodels.custom.PrivilegeTableEntry;
+import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.mongodb.repository.Query;
+import org.springframework.stereotype.Component;
 
-import java.util.List;
-
-@Service
-public class PrivilegeRegistryService {
-
-    @Autowired
-    PrivilegeRegistryRepository privilegeRegistryRepository;
-
-    public List<PrivilegeRegistry_PrivilegeRegistry> getAllPrivilegesList() {
-        List<PrivilegeRegistry_PrivilegeRegistry> privilegeRegistryList = privilegeRegistryRepository.findAll();
-        return privilegeRegistryList;
-    }
+@Component("privilegeTableRepository")
+public interface PrivilegeTableRepository extends MongoRepository<PrivilegeTableEntry, Object> {
+    @Query(value="{ 'Id': ?0 }")
+    PrivilegeTableEntry getById(String Id);
 }

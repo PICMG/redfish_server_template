@@ -21,6 +21,8 @@
 
 package org.picmg.redfish_server_template.config;
 
+import org.picmg.redfish_server_template.repository.PrivilegeTableRepository;
+import org.picmg.redfish_server_template.repository.AccountService.RedfishAuthorizationManager;
 import org.picmg.redfish_server_template.services.jwt.JWTRequestFilters;
 import org.picmg.redfish_server_template.services.SessionService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,6 +41,9 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     @Autowired
+    PrivilegeTableRepository privilegeTableRepository;
+
+    @Autowired
     SessionService sessionService;
 
     @Autowired
@@ -48,6 +53,9 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
         auth.userDetailsService(sessionService);
     }
+
+    @Autowired
+    RedfishAuthorizationManager redfishAuthorizationManager;
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
@@ -64,8 +72,9 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                                 .antMatchers("/redfish/v1/").permitAll()
                                 .antMatchers("/redfish/v1/odata").permitAll()
                                 .antMatchers("/redfish/v1/$metadata").permitAll()
+                                .antMatchers(HttpMethod.POST, "/redfish/v1/SessionService/Sessions").permitAll()
                                 .antMatchers("/redfish/v1/EventService/SSE").permitAll()
-                                .anyRequest().authenticated()
+                                .anyRequest().access(redfishAuthorizationManager)
                 )
                 .httpBasic((configureHttpBasic) ->
                         configureHttpBasic.realmName("/redfish/v1/")
