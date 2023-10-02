@@ -31,7 +31,6 @@ import org.picmg.redfish_server_template.RFmodels.custom.Events;
 import org.picmg.redfish_server_template.services.EventService;
 import org.picmg.redfish_server_template.services.QueryParameterService;
 import org.picmg.redfish_server_template.services.RedfishErrorResponseService;
-import org.picmg.redfish_server_template.services.apiAuth.APIAuthService;
 import org.openapitools.jackson.nullable.JsonNullableModule;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -71,9 +70,6 @@ public class EventController {
     EventService eventService;
 
     @Autowired
-    APIAuthService apiAuthService;
-
-    @Autowired
     QueryParameterService queryParameterService;
 
     @Autowired
@@ -88,10 +84,6 @@ public class EventController {
 
     @GetMapping("/Subscriptions")
     public ResponseEntity<?> getAllSubscriptions(@RequestHeader String authorization) {
-        if(!apiAuthService.isUserAuthorizedForOperationType(authorization.substring(7), controllerEntityName, "GET")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Service recognized the credentials in the request but those credentials do not possess" +
-                    "authorization to complete this request.");
-        }
         String uri = "/redfish/v1/EventService/Subscriptions";
         Integer newTaskId = eventService.getTaskId();
         OffsetDateTime startTime = OffsetDateTime.now();
@@ -113,10 +105,6 @@ public class EventController {
     @GetMapping("/Subscriptions/{ID}")
     @ResponseBody
     public ResponseEntity<?> getSubscriptionById(@PathVariable String ID, @RequestHeader String authorization) {
-        if(!apiAuthService.isUserAuthorizedForOperationType(authorization.substring(7), controllerEntityName, "GET")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Service recognized the credentials in the request but those credentials do not possess" +
-                    "authorization to complete this request.");
-        }
         String uri = "/redfish/v1/EventService/Subscriptions/"+ID;
         Integer newTaskId = eventService.getTaskId();
         OffsetDateTime startTime = OffsetDateTime.now();
@@ -140,10 +128,6 @@ public class EventController {
 
     @RequestMapping(value = "/Subscriptions", method= RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> addSubscription(@RequestBody EventDestination_EventDestination events, @RequestHeader String authorization){
-        if(!apiAuthService.isUserAuthorizedForOperationType(authorization.substring(7), controllerEntityName, "GET")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Service recognized the credentials in the request but those credentials do not possess" +
-                    "authorization to complete this request.");
-        }
         String uri = "/redfish/v1/EventService/Subscriptions";
         Integer newTaskId = eventService.getTaskId();
         OffsetDateTime startTime = OffsetDateTime.now();
@@ -172,9 +156,6 @@ public class EventController {
 
     @RequestMapping(value="/Subscriptions/{ID}", method=RequestMethod.DELETE)
     public ResponseEntity<?> deleteSubscription(@PathVariable String ID, @RequestHeader String authorization) {
-        if(!apiAuthService.isUserAuthorizedForOperationType(authorization.substring(7), controllerEntityName, "DELETE")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("");
-        }
         String uri = "/redfish/v1/EventService/Subscriptions/"+ID;
         Integer newTaskId = eventService.getTaskId();
         OffsetDateTime startTime = OffsetDateTime.now();

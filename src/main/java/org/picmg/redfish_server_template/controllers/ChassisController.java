@@ -23,7 +23,6 @@ package org.picmg.redfish_server_template.controllers;
 
 import org.picmg.redfish_server_template.RFmodels.AllModels.*;
 import org.picmg.redfish_server_template.services.ChassisService;
-import org.picmg.redfish_server_template.services.apiAuth.APIAuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -49,9 +48,6 @@ public class ChassisController {
     @Autowired
     ChassisService chassisService;
 
-    @Autowired
-    APIAuthService apiAuthService;
-
     @GetMapping("/redfish/v1/Chassis")
     public ResponseEntity<?> getChassisCollection() {
         String uri = "/redfish/v1/Chassis";
@@ -76,13 +72,6 @@ public class ChassisController {
     @GetMapping("/redfish/v1/Chassis/{chassisObjectId}")
     public ResponseEntity<?> getChassis(@PathVariable String chassisObjectId, @RequestHeader String authorization) throws Exception {
         String token = authorization.substring(7);
-        if (!apiAuthService.isUserAuthenticated(token)){
-            return ResponseEntity.badRequest().body("There is no valid session established with the implementation.");
-        }
-        if(!apiAuthService.isUserAuthorizedForOperationType(token, "ServiceRoot", "GET")) {
-            return ResponseEntity.internalServerError().body("Service recognized the credentials in the request but those credentials do not possess\n" +
-                    "authorization to complete this request.");
-        }
         String uri = "/redfish/v1/Chassis/"+chassisObjectId;
         Integer newTaskId = chassisService.getTaskId();
         OffsetDateTime startTime = OffsetDateTime.now();
@@ -109,13 +98,6 @@ public class ChassisController {
         Integer newTaskId = chassisService.getTaskId();
         OffsetDateTime startTime = OffsetDateTime.now();
 
-        if (!apiAuthService.isUserAuthenticated(token)){
-            return ResponseEntity.badRequest().body("There is no valid session established with the implementation.");
-        }
-        if(!apiAuthService.isUserAuthorizedForOperationType(token, "ServiceRoot", "GET")) {
-            return ResponseEntity.internalServerError().body("Service recognized the credentials in the request but those credentials do not possess\n" +
-                    "authorization to complete this request.");
-        }
         ControlCollection controlCollection = null;
         try {
             Future<ControlCollection> resp = chassisService.getControlCollection(startTime, newTaskId, chassisObjectId);
@@ -139,13 +121,6 @@ public class ChassisController {
         Integer newTaskId = chassisService.getTaskId();
         OffsetDateTime startTime = OffsetDateTime.now();
         Control_Control control = null;
-        if (!apiAuthService.isUserAuthenticated(token)){
-            return ResponseEntity.badRequest().body("There is no valid session established with the implementation.");
-        }
-        if(!apiAuthService.isUserAuthorizedForOperationType(token, "ServiceRoot", "GET")) {
-            return ResponseEntity.internalServerError().body("Service recognized the credentials in the request but those credentials do not possess\n" +
-                    "authorization to complete this request.");
-        }
         try {
             Future<Control_Control> resp = chassisService.getPowerLimit(startTime, newTaskId, Id, controlObjectId);
             control = resp.get(taskWaitTime, TimeUnit.SECONDS);
@@ -167,13 +142,6 @@ public class ChassisController {
         String uri = "/redfish/v1/Chassis/" + chassisObjectId + "/Sensors";
         Integer newTaskId = chassisService.getTaskId();
         OffsetDateTime startTime = OffsetDateTime.now();
-        if (!apiAuthService.isUserAuthenticated(token)){
-            return ResponseEntity.badRequest().body("There is no valid session established with the implementation.");
-        }
-        if(!apiAuthService.isUserAuthorizedForOperationType(token, "ServiceRoot", "GET")) {
-            return ResponseEntity.internalServerError().body("Service recognized the credentials in the request but those credentials do not possess\n" +
-                    "authorization to complete this request.");
-        }
         SensorCollection sensorCollection = null;
         try {
             Future<SensorCollection> resp = chassisService.getSensorCollection(startTime, newTaskId, chassisObjectId);
@@ -197,13 +165,6 @@ public class ChassisController {
         String uri = "/redfish/v1/Chassis/{chassisObjectId}/Sensors/"+sensorObjectId;
         Integer newTaskId = chassisService.getTaskId();
         OffsetDateTime startTime = OffsetDateTime.now();
-        if (!apiAuthService.isUserAuthenticated(token)){
-            return ResponseEntity.badRequest().body("There is no valid session established with the implementation.");
-        }
-        if(!apiAuthService.isUserAuthorizedForOperationType(token, "ServiceRoot", "GET")) {
-            return ResponseEntity.internalServerError().body("Service recognized the credentials in the request but those credentials do not possess\n" +
-                    "authorization to complete this request.");
-        }
         Sensor_Sensor sensor = null;
         try {
             Future<Sensor_Sensor> resp = chassisService.getSensor(startTime, newTaskId, chassisObjectId, sensorObjectId);
@@ -228,13 +189,6 @@ public class ChassisController {
         Integer newTaskId = chassisService.getTaskId();
         OffsetDateTime startTime = OffsetDateTime.now();
 
-        if (!apiAuthService.isUserAuthenticated(token)){
-            return ResponseEntity.badRequest().body("There is no valid session established with the implementation.");
-        }
-        if(!apiAuthService.isUserAuthorizedForOperationType(token, "ServiceRoot", "GET")) {
-            return ResponseEntity.internalServerError().body("Service recognized the credentials in the request but those credentials do not possess\n" +
-                    "authorization to complete this request.");
-        }
         EnvironmentMetrics_EnvironmentMetrics obj = null;
         try {
             Future<EnvironmentMetrics_EnvironmentMetrics> resp = chassisService.getEnvironmentMetrics(startTime, newTaskId, chassisObjectId);
@@ -260,13 +214,6 @@ public class ChassisController {
         Integer newTaskId = chassisService.getTaskId();
         OffsetDateTime startTime = OffsetDateTime.now();
 
-        if (!apiAuthService.isUserAuthenticated(token)){
-            return ResponseEntity.badRequest().body("There is no valid session established with the implementation.");
-        }
-        if(!apiAuthService.isUserAuthorizedForOperationType(token, "ServiceRoot", "GET")) {
-            return ResponseEntity.internalServerError().body("Service recognized the credentials in the request but those credentials do not possess\n" +
-                    "authorization to complete this request.");
-        }
         Power_Power obj = null;
         try {
             Future<Power_Power> resp = chassisService.getPower(startTime, newTaskId, chassisObjectId);
@@ -291,13 +238,6 @@ public class ChassisController {
         Integer newTaskId = chassisService.getTaskId();
         OffsetDateTime startTime = OffsetDateTime.now();
 
-        if (!apiAuthService.isUserAuthenticated(token)){
-            return ResponseEntity.badRequest().body("There is no valid session established with the implementation.");
-        }
-        if(!apiAuthService.isUserAuthorizedForOperationType(token, "ServiceRoot", "GET")) {
-            return ResponseEntity.internalServerError().body("Service recognized the credentials in the request but those credentials do not possess\n" +
-                    "authorization to complete this request.");
-        }
         PowerSubsystem_PowerSubsystem obj = null;
         try {
             Future<PowerSubsystem_PowerSubsystem> resp = chassisService.getPowerSubsystem(startTime, newTaskId, chassisObjectId);
@@ -323,13 +263,6 @@ public class ChassisController {
         Integer newTaskId = chassisService.getTaskId();
         OffsetDateTime startTime = OffsetDateTime.now();
 
-        if (!apiAuthService.isUserAuthenticated(token)){
-            return ResponseEntity.badRequest().body("There is no valid session established with the implementation.");
-        }
-        if(!apiAuthService.isUserAuthorizedForOperationType(token, "ServiceRoot", "GET")) {
-            return ResponseEntity.internalServerError().body("Service recognized the credentials in the request but those credentials do not possess\n" +
-                    "authorization to complete this request.");
-        }
         PowerSupplyCollection obj = null;
         try {
             Future<PowerSupplyCollection> resp = chassisService.getPowerSupplyCollection(startTime, newTaskId, chassisObjectId);
@@ -354,13 +287,6 @@ public class ChassisController {
         Integer newTaskId = chassisService.getTaskId();
         OffsetDateTime startTime = OffsetDateTime.now();
 
-        if (!apiAuthService.isUserAuthenticated(token)){
-            return ResponseEntity.badRequest().body("There is no valid session established with the implementation.");
-        }
-        if(!apiAuthService.isUserAuthorizedForOperationType(token, "ServiceRoot", "GET")) {
-            return ResponseEntity.internalServerError().body("Service recognized the credentials in the request but those credentials do not possess\n" +
-                    "authorization to complete this request.");
-        }
         BatteryCollection obj = null;
         try {
             Future<BatteryCollection> resp = chassisService.getBatteryCollection(startTime, newTaskId, chassisObjectId);
@@ -385,13 +311,6 @@ public class ChassisController {
         Integer newTaskId = chassisService.getTaskId();
         OffsetDateTime startTime = OffsetDateTime.now();
 
-        if (!apiAuthService.isUserAuthenticated(token)){
-            return ResponseEntity.badRequest().body("There is no valid session established with the implementation.");
-        }
-        if(!apiAuthService.isUserAuthorizedForOperationType(token, "ServiceRoot", "GET")) {
-            return ResponseEntity.internalServerError().body("Service recognized the credentials in the request but those credentials do not possess\n" +
-                    "authorization to complete this request.");
-        }
         PowerSupply_PowerSupply obj = null;
         try {
             Future<PowerSupply_PowerSupply> resp = chassisService.getPowerSupply(startTime, newTaskId, chassisObjectId, powerSupplyObjectId);
@@ -416,13 +335,6 @@ public class ChassisController {
         Integer newTaskId = chassisService.getTaskId();
         OffsetDateTime startTime = OffsetDateTime.now();
 
-        if (!apiAuthService.isUserAuthenticated(token)){
-            return ResponseEntity.badRequest().body("There is no valid session established with the implementation.");
-        }
-        if(!apiAuthService.isUserAuthorizedForOperationType(token, "ServiceRoot", "GET")) {
-            return ResponseEntity.internalServerError().body("Service recognized the credentials in the request but those credentials do not possess\n" +
-                    "authorization to complete this request.");
-        }
         Assembly_Assembly obj = null;
         try {
             Future<Assembly_Assembly> resp = chassisService.getAssembly(startTime, newTaskId, chassisObjectId, powerSupplyObjectId);
@@ -447,13 +359,6 @@ public class ChassisController {
         Integer newTaskId = chassisService.getTaskId();
         OffsetDateTime startTime = OffsetDateTime.now();
 
-        if (!apiAuthService.isUserAuthenticated(token)){
-            return ResponseEntity.badRequest().body("There is no valid session established with the implementation.");
-        }
-        if(!apiAuthService.isUserAuthorizedForOperationType(token, "ServiceRoot", "GET")) {
-            return ResponseEntity.internalServerError().body("Service recognized the credentials in the request but those credentials do not possess\n" +
-                    "authorization to complete this request.");
-        }
         PowerSupplyMetrics_PowerSupplyMetrics obj = null;
         try {
             Future<PowerSupplyMetrics_PowerSupplyMetrics> resp = chassisService.getPowerSupplyMetrics(startTime, newTaskId, chassisObjectId, powerSupplyObjectId);
@@ -478,13 +383,6 @@ public class ChassisController {
         Integer newTaskId = chassisService.getTaskId();
         OffsetDateTime startTime = OffsetDateTime.now();
 
-        if (!apiAuthService.isUserAuthenticated(token)){
-            return ResponseEntity.badRequest().body("There is no valid session established with the implementation.");
-        }
-        if(!apiAuthService.isUserAuthorizedForOperationType(token, "ServiceRoot", "GET")) {
-            return ResponseEntity.internalServerError().body("Service recognized the credentials in the request but those credentials do not possess\n" +
-                    "authorization to complete this request.");
-        }
         ThermalSubsystem_ThermalSubsystem obj = null;
         try {
             Future<ThermalSubsystem_ThermalSubsystem> resp = chassisService.getThermalSubsystem(startTime, newTaskId, chassisObjectId);
@@ -509,13 +407,6 @@ public class ChassisController {
         Integer newTaskId = chassisService.getTaskId();
         OffsetDateTime startTime = OffsetDateTime.now();
 
-        if (!apiAuthService.isUserAuthenticated(token)){
-            return ResponseEntity.badRequest().body("There is no valid session established with the implementation.");
-        }
-        if(!apiAuthService.isUserAuthorizedForOperationType(token, "ServiceRoot", "GET")) {
-            return ResponseEntity.internalServerError().body("Service recognized the credentials in the request but those credentials do not possess\n" +
-                    "authorization to complete this request.");
-        }
         ThermalMetrics_ThermalMetrics obj = null;
         try {
             Future<ThermalMetrics_ThermalMetrics> resp = chassisService.getThermalMetrics(startTime, newTaskId, chassisObjectId);
@@ -540,13 +431,6 @@ public class ChassisController {
         Integer newTaskId = chassisService.getTaskId();
         OffsetDateTime startTime = OffsetDateTime.now();
 
-        if (!apiAuthService.isUserAuthenticated(token)){
-            return ResponseEntity.badRequest().body("There is no valid session established with the implementation.");
-        }
-        if(!apiAuthService.isUserAuthorizedForOperationType(token, "ServiceRoot", "GET")) {
-            return ResponseEntity.internalServerError().body("Service recognized the credentials in the request but those credentials do not possess\n" +
-                    "authorization to complete this request.");
-        }
         FanCollection obj = null;
         try {
             Future<FanCollection> resp = chassisService.getFanCollection(startTime, newTaskId, chassisObjectId);
@@ -571,13 +455,6 @@ public class ChassisController {
         Integer newTaskId = chassisService.getTaskId();
         OffsetDateTime startTime = OffsetDateTime.now();
 
-        if (!apiAuthService.isUserAuthenticated(token)){
-            return ResponseEntity.badRequest().body("There is no valid session established with the implementation.");
-        }
-        if(!apiAuthService.isUserAuthorizedForOperationType(token, "ServiceRoot", "GET")) {
-            return ResponseEntity.internalServerError().body("Service recognized the credentials in the request but those credentials do not possess\n" +
-                    "authorization to complete this request.");
-        }
         Fan_Fan obj = null;
         try {
             Future<Fan_Fan> resp = chassisService.getFan(startTime, newTaskId, chassisObjectId, fanObjectId);
@@ -602,13 +479,6 @@ public class ChassisController {
         Integer newTaskId = chassisService.getTaskId();
         OffsetDateTime startTime = OffsetDateTime.now();
 
-        if (!apiAuthService.isUserAuthenticated(token)){
-            return ResponseEntity.badRequest().body("There is no valid session established with the implementation.");
-        }
-        if(!apiAuthService.isUserAuthorizedForOperationType(token, "ServiceRoot", "GET")) {
-            return ResponseEntity.internalServerError().body("Service recognized the credentials in the request but those credentials do not possess\n" +
-                    "authorization to complete this request.");
-        }
         Battery_Battery obj = null;
         try {
             Future<Battery_Battery> resp = chassisService.getBattery(startTime, newTaskId, chassisObjectId, batteryObjectId);
@@ -633,13 +503,6 @@ public class ChassisController {
         Integer newTaskId = chassisService.getTaskId();
         OffsetDateTime startTime = OffsetDateTime.now();
 
-        if (!apiAuthService.isUserAuthenticated(token)){
-            return ResponseEntity.badRequest().body("There is no valid session established with the implementation.");
-        }
-        if(!apiAuthService.isUserAuthorizedForOperationType(token, "ServiceRoot", "GET")) {
-            return ResponseEntity.internalServerError().body("Service recognized the credentials in the request but those credentials do not possess\n" +
-                    "authorization to complete this request.");
-        }
         BatteryMetrics_BatteryMetrics obj = null;
         try {
             Future<BatteryMetrics_BatteryMetrics> resp = chassisService.getBatteryMetrics(startTime, newTaskId, chassisObjectId, batteryObjectId);
@@ -656,11 +519,6 @@ public class ChassisController {
         return ResponseEntity.ok(obj);
     }
 
-    // Below is not needed after parameterizing the API. However, please review this once.
-//    @GetMapping("/redfish/v1/Chassis/1U/Controls/{controlObjectId2}")
-//    public ResponseEntity<?> getCPUFreq(@PathVariable String controlObjectId2){
-//        return ResponseEntity.ok(chassisService.getCPUFreq(controlObjectId2));
-//    }
 
     @GetMapping("/redfish/v1/Chassis/{chassisObjectId}/TrustedComponents")
     public ResponseEntity<?> getTrustedComponentCollection(@PathVariable String  chassisObjectId, @RequestHeader String authorization) throws Exception {
@@ -670,13 +528,6 @@ public class ChassisController {
         Integer newTaskId = chassisService.getTaskId();
         OffsetDateTime startTime = OffsetDateTime.now();
 
-        if (!apiAuthService.isUserAuthenticated(token)){
-            return ResponseEntity.badRequest().body("There is no valid session established with the implementation.");
-        }
-        if(!apiAuthService.isUserAuthorizedForOperationType(token, "ServiceRoot", "GET")) {
-            return ResponseEntity.internalServerError().body("Service recognized the credentials in the request but those credentials do not possess\n" +
-                    "authorization to complete this request.");
-        }
         TrustedComponentCollection obj = null;
         try {
             Future<TrustedComponentCollection> resp = chassisService.getTrustedComponentCollection(startTime, newTaskId, chassisObjectId);
@@ -701,13 +552,6 @@ public class ChassisController {
         Integer newTaskId = chassisService.getTaskId();
         OffsetDateTime startTime = OffsetDateTime.now();
 
-        if (!apiAuthService.isUserAuthenticated(token)){
-            return ResponseEntity.badRequest().body("There is no valid session established with the implementation.");
-        }
-        if(!apiAuthService.isUserAuthorizedForOperationType(token, "ServiceRoot", "GET")) {
-            return ResponseEntity.internalServerError().body("Service recognized the credentials in the request but those credentials do not possess\n" +
-                    "authorization to complete this request.");
-        }
         CertificateCollection obj = null;
         try {
             Future<CertificateCollection> resp = chassisService.getCertificateCollection(startTime, newTaskId, chassisObjectId, trustedComponentObjectId);
@@ -732,13 +576,6 @@ public class ChassisController {
         Integer newTaskId = chassisService.getTaskId();
         OffsetDateTime startTime = OffsetDateTime.now();
 
-        if (!apiAuthService.isUserAuthenticated(token)){
-            return ResponseEntity.badRequest().body("There is no valid session established with the implementation.");
-        }
-        if(!apiAuthService.isUserAuthorizedForOperationType(token, "ServiceRoot", "GET")) {
-            return ResponseEntity.internalServerError().body("Service recognized the credentials in the request but those credentials do not possess\n" +
-                    "authorization to complete this request.");
-        }
         Certificate_Certificate obj = null;
         try {
             Future<Certificate_Certificate> resp = chassisService.getCertificate(startTime, newTaskId, chassisObjectId, trustedComponentObjectId, certificateObjectId);
@@ -763,13 +600,6 @@ public class ChassisController {
         Integer newTaskId = chassisService.getTaskId();
         OffsetDateTime startTime = OffsetDateTime.now();
 
-        if (!apiAuthService.isUserAuthenticated(token)){
-            return ResponseEntity.badRequest().body("There is no valid session established with the implementation.");
-        }
-        if(!apiAuthService.isUserAuthorizedForOperationType(token, "ServiceRoot", "GET")) {
-            return ResponseEntity.internalServerError().body("Service recognized the credentials in the request but those credentials do not possess\n" +
-                    "authorization to complete this request.");
-        }
         TrustedComponent_TrustedComponent obj = null;
         try {
             Future<TrustedComponent_TrustedComponent> resp = chassisService.getTrustedComponent(startTime, newTaskId, chassisObjectId, trustedComponentObjectId);

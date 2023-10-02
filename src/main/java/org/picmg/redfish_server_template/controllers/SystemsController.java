@@ -23,7 +23,6 @@ package org.picmg.redfish_server_template.controllers;
 
 import org.picmg.redfish_server_template.RFmodels.AllModels.*;
 import org.picmg.redfish_server_template.services.SystemsService;
-import org.picmg.redfish_server_template.services.apiAuth.APIAuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -48,9 +47,6 @@ public class SystemsController {
     long taskWaitTime;
     @Autowired
     SystemsService systemsService;
-
-    @Autowired
-    APIAuthService apiAuthService;
 
     @GetMapping("/redfish/v1/Systems")
     public ResponseEntity<?> getComputerSystemCollection(){
@@ -98,15 +94,6 @@ public class SystemsController {
 
     @GetMapping("/redfish/v1/Systems/{systemCollectionId}/Bios")
     public ResponseEntity<?> getBios(@PathVariable String systemCollectionId, @RequestHeader String authorization) throws Exception {
-        String token = authorization.substring(7);
-        if (!apiAuthService.isUserAuthenticated(token)){
-            return ResponseEntity.badRequest().body("There is no valid session established with the implementation.");
-        }
-        if(!apiAuthService.isUserAuthorizedForOperationType(token, "ServiceRoot", "GET")) {
-            return ResponseEntity.internalServerError().body("Service recognized the credentials in the request but those credentials do not possess\n" +
-                    "authorization to complete this request.");
-        }
-
         String uri = "/redfish/v1/Systems/"+systemCollectionId+"/Bios";
         Integer newTaskId = systemsService.getTaskId();
         OffsetDateTime startTime = OffsetDateTime.now();
@@ -128,15 +115,6 @@ public class SystemsController {
 
     @GetMapping("/redfish/v1/Systems/{systemCollectionId}/Bios/Settings")
     public ResponseEntity<?> getBiosSettings(@PathVariable String systemCollectionId, @RequestHeader String authorization) throws Exception {
-        String token = authorization.substring(7);
-        if (!apiAuthService.isUserAuthenticated(token)){
-            return ResponseEntity.badRequest().body("There is no valid session established with the implementation.");
-        }
-        if(!apiAuthService.isUserAuthorizedForOperationType(token, "ServiceRoot", "GET")) {
-            return ResponseEntity.internalServerError().body("Service recognized the credentials in the request but those credentials do not possess\n" +
-                    "authorization to complete this request.");
-        }
-
         String uri = "/redfish/v1/Systems/"+systemCollectionId+"/Bios/Settings";
         Integer newTaskId = systemsService.getTaskId();
         OffsetDateTime startTime = OffsetDateTime.now();
@@ -158,14 +136,6 @@ public class SystemsController {
 
     @GetMapping("/redfish/v1/Systems/{systemCollectionId}/SecureBoot")
     public ResponseEntity<?> getSecureBoot(@PathVariable String systemCollectionId, @RequestHeader String authorization) throws Exception {
-        String token = authorization.substring(7);
-        if (!apiAuthService.isUserAuthenticated(token)){
-            return ResponseEntity.badRequest().body("There is no valid session established with the implementation.");
-        }
-        if(!apiAuthService.isUserAuthorizedForOperationType(token, "ServiceRoot", "GET")) {
-            return ResponseEntity.internalServerError().body("Service recognized the credentials in the request but those credentials do not possess\n" +
-                    "authorization to complete this request.");
-        }
         String uri = "/redfish/v1/Systems/"+systemCollectionId+"/SecureBoot";
         Integer newTaskId = systemsService.getTaskId();
         OffsetDateTime startTime = OffsetDateTime.now();
@@ -187,14 +157,6 @@ public class SystemsController {
 
     @GetMapping("/redfish/v1/Systems/{systemCollectionId}/SecureBoot/SecureBootDatabases")
     public ResponseEntity<?> getSecureBootDataBaseCollection(@PathVariable String systemCollectionId, @RequestHeader String authorization) throws Exception {
-        String token = authorization.substring(7);
-        if (!apiAuthService.isUserAuthenticated(token)){
-            return ResponseEntity.badRequest().body("There is no valid session established with the implementation.");
-        }
-        if(!apiAuthService.isUserAuthorizedForOperationType(token, "ServiceRoot", "GET")) {
-            return ResponseEntity.internalServerError().body("Service recognized the credentials in the request but those credentials do not possess\n" +
-                    "authorization to complete this request.");
-        }
         String uri = "/redfish/v1/Systems/"+systemCollectionId+"/SecureBoot/SecureBootDatabases";
         Integer newTaskId = systemsService.getTaskId();
         OffsetDateTime startTime = OffsetDateTime.now();
@@ -216,15 +178,6 @@ public class SystemsController {
 
     @GetMapping("/redfish/v1/Systems/{systemCollectionId}/SecureBoot/SecureBootDatabases/{secureBootDatabaseObjectId}")
     public ResponseEntity<?> getSecureBootDatabase(@PathVariable String systemCollectionId, @PathVariable String secureBootDatabaseObjectId, @RequestHeader String authorization) throws Exception {
-        String token = authorization.substring(7);
-        if (!apiAuthService.isUserAuthenticated(token)){
-            return ResponseEntity.badRequest().body("There is no valid session established with the implementation.");
-        }
-        if(!apiAuthService.isUserAuthorizedForOperationType(token, "ServiceRoot", "GET")) {
-            return ResponseEntity.internalServerError().body("Service recognized the credentials in the request but those credentials do not possess\n" +
-                    "authorization to complete this request.");
-        }
-
         String uri = "/redfish/v1/Systems/"+systemCollectionId+"/SecureBoot/SecureBootDatabases/"+secureBootDatabaseObjectId;
         Integer newTaskId = systemsService.getTaskId();
         OffsetDateTime startTime = OffsetDateTime.now();
@@ -246,13 +199,6 @@ public class SystemsController {
 
     @GetMapping("/redfish/v1/Systems/{systemCollectionId}/Processors")
     public ResponseEntity<?> getProcessorCollection(@PathVariable String systemCollectionId, @RequestHeader String authorization) throws Exception {String token = authorization.substring(7);
-        if (!apiAuthService.isUserAuthenticated(token)){
-            return ResponseEntity.badRequest().body("There is no valid session established with the implementation.");
-        }
-        if(!apiAuthService.isUserAuthorizedForOperationType(token, "ServiceRoot", "GET")) {
-            return ResponseEntity.internalServerError().body("Service recognized the credentials in the request but those credentials do not possess\n" +
-                    "authorization to complete this request.");
-        }
         String uri = "/redfish/v1/Systems/"+systemCollectionId+"/Processors";
         Integer newTaskId = systemsService.getTaskId();
         OffsetDateTime startTime = OffsetDateTime.now();
@@ -274,14 +220,6 @@ public class SystemsController {
 
     @GetMapping("/redfish/v1/Systems/{systemCollectionId}/Processors/{processorObjectId}")
     public ResponseEntity<?> getProcessor(@PathVariable String systemCollectionId, @PathVariable String processorObjectId, @RequestHeader String authorization) throws Exception {
-        String token = authorization.substring(7);
-        if (!apiAuthService.isUserAuthenticated(token)){
-            return ResponseEntity.badRequest().body("There is no valid session established with the implementation.");
-        }
-        if(!apiAuthService.isUserAuthorizedForOperationType(token, "ServiceRoot", "GET")) {
-            return ResponseEntity.internalServerError().body("Service recognized the credentials in the request but those credentials do not possess\n" +
-                    "authorization to complete this request.");
-        }
         String uri = "/redfish/v1/Systems/"+systemCollectionId+"/Processors/"+processorObjectId;
         Integer newTaskId = systemsService.getTaskId();
         OffsetDateTime startTime = OffsetDateTime.now();
@@ -303,14 +241,6 @@ public class SystemsController {
 
     @GetMapping("/redfish/v1/Systems/{systemCollectionId}/Processors/{processorObjectId}/EnvironmentMetrics")
     public ResponseEntity<?> getEnvironmentMetrics(@PathVariable String systemCollectionId, @PathVariable String processorObjectId, @RequestHeader String authorization) throws Exception {
-        String token = authorization.substring(7);
-        if (!apiAuthService.isUserAuthenticated(token)){
-            return ResponseEntity.badRequest().body("There is no valid session established with the implementation.");
-        }
-        if(!apiAuthService.isUserAuthorizedForOperationType(token, "ServiceRoot", "GET")) {
-            return ResponseEntity.internalServerError().body("Service recognized the credentials in the request but those credentials do not possess\n" +
-                    "authorization to complete this request.");
-        }
         String uri = "/redfish/v1/Systems/"+systemCollectionId+"/Processors/"+processorObjectId+"/EnvironmentMetrics";
         Integer newTaskId = systemsService.getTaskId();
         OffsetDateTime startTime = OffsetDateTime.now();
@@ -332,14 +262,6 @@ public class SystemsController {
 
     @GetMapping("/redfish/v1/Systems/{systemCollectionId}/Processors/{processorObjectId}/ProcessorMetrics")
     public ResponseEntity<?> getProcessorMetrics(@PathVariable String systemCollectionId, @PathVariable String processorObjectId, @RequestHeader String authorization) throws Exception {
-        String token = authorization.substring(7);
-        if (!apiAuthService.isUserAuthenticated(token)){
-            return ResponseEntity.badRequest().body("There is no valid session established with the implementation.");
-        }
-        if(!apiAuthService.isUserAuthorizedForOperationType(token, "ServiceRoot", "GET")) {
-            return ResponseEntity.internalServerError().body("Service recognized the credentials in the request but those credentials do not possess\n" +
-                    "authorization to complete this request.");
-        }
         String uri = "/redfish/v1/Systems/"+systemCollectionId+"/Processors/"+processorObjectId+"/ProcessorMetrics";
         Integer newTaskId = systemsService.getTaskId();
         OffsetDateTime startTime = OffsetDateTime.now();
@@ -361,14 +283,6 @@ public class SystemsController {
 
     @GetMapping("/redfish/v1/Systems/{systemCollectionId}/Memory")
     public ResponseEntity<?> getMemoryCollection(@PathVariable String systemCollectionId, @RequestHeader String authorization) throws Exception {
-        String token = authorization.substring(7);
-        if (!apiAuthService.isUserAuthenticated(token)){
-            return ResponseEntity.badRequest().body("There is no valid session established with the implementation.");
-        }
-        if(!apiAuthService.isUserAuthorizedForOperationType(token, "ServiceRoot", "GET")) {
-            return ResponseEntity.internalServerError().body("Service recognized the credentials in the request but those credentials do not possess\n" +
-                    "authorization to complete this request.");
-        }
         String uri = "/redfish/v1/Systems/"+systemCollectionId+"/Memory";
         Integer newTaskId = systemsService.getTaskId();
         OffsetDateTime startTime = OffsetDateTime.now();
@@ -390,14 +304,6 @@ public class SystemsController {
 
     @GetMapping("/redfish/v1/Systems/{systemCollectionId}/Memory/{memoryObjectId}")
     public ResponseEntity<?> getMemory(@PathVariable String systemCollectionId, @PathVariable String memoryObjectId, @RequestHeader String authorization) throws Exception {
-        String token = authorization.substring(7);
-        if (!apiAuthService.isUserAuthenticated(token)){
-            return ResponseEntity.badRequest().body("There is no valid session established with the implementation.");
-        }
-        if(!apiAuthService.isUserAuthorizedForOperationType(token, "ServiceRoot", "GET")) {
-            return ResponseEntity.internalServerError().body("Service recognized the credentials in the request but those credentials do not possess\n" +
-                    "authorization to complete this request.");
-        }
         String uri = "/redfish/v1/Systems/"+systemCollectionId+"/Memory/"+memoryObjectId;
         Integer newTaskId = systemsService.getTaskId();
         OffsetDateTime startTime = OffsetDateTime.now();
@@ -419,14 +325,6 @@ public class SystemsController {
 
     @GetMapping("/redfish/v1/Systems/{systemCollectionId}/EthernetInterfaces")
     public ResponseEntity<?> getEthernetInterfaceCollection(@PathVariable String systemCollectionId, @RequestHeader String authorization) throws Exception {
-        String token = authorization.substring(7);
-        if (!apiAuthService.isUserAuthenticated(token)){
-            return ResponseEntity.badRequest().body("There is no valid session established with the implementation.");
-        }
-        if(!apiAuthService.isUserAuthorizedForOperationType(token, "ServiceRoot", "GET")) {
-            return ResponseEntity.internalServerError().body("Service recognized the credentials in the request but those credentials do not possess\n" +
-                    "authorization to complete this request.");
-        }
         String uri = "/redfish/v1/Systems/"+systemCollectionId+"/EthernetInterfaces";
         Integer newTaskId = systemsService.getTaskId();
         OffsetDateTime startTime = OffsetDateTime.now();
@@ -448,14 +346,6 @@ public class SystemsController {
 
     @GetMapping("/redfish/v1/Systems/{systemCollectionId}/EthernetInterfaces/{ethernetInterfaceObjectId}")
     public ResponseEntity<?> getEthernetInterface(@PathVariable String systemCollectionId, @PathVariable String ethernetInterfaceObjectId, @RequestHeader String authorization) throws Exception {
-        String token = authorization.substring(7);
-        if (!apiAuthService.isUserAuthenticated(token)){
-            return ResponseEntity.badRequest().body("There is no valid session established with the implementation.");
-        }
-        if(!apiAuthService.isUserAuthorizedForOperationType(token, "ServiceRoot", "GET")) {
-            return ResponseEntity.internalServerError().body("Service recognized the credentials in the request but those credentials do not possess\n" +
-                    "authorization to complete this request.");
-        }
         String uri = "/redfish/v1/Systems/"+systemCollectionId+"/EthernetInterfaces/"+ethernetInterfaceObjectId;
         Integer newTaskId = systemsService.getTaskId();
         OffsetDateTime startTime = OffsetDateTime.now();
@@ -477,14 +367,6 @@ public class SystemsController {
 
     @GetMapping("/redfish/v1/Systems/{systemCollectionId}/SimpleStorage")
     public ResponseEntity<?> getSimpleStorageCollection(@PathVariable String systemCollectionId, @RequestHeader String authorization) throws Exception {
-        String token = authorization.substring(7);
-        if (!apiAuthService.isUserAuthenticated(token)){
-            return ResponseEntity.badRequest().body("There is no valid session established with the implementation.");
-        }
-        if(!apiAuthService.isUserAuthorizedForOperationType(token, "ServiceRoot", "GET")) {
-            return ResponseEntity.internalServerError().body("Service recognized the credentials in the request but those credentials do not possess\n" +
-                    "authorization to complete this request.");
-        }
         String uri = "/redfish/v1/Systems/"+systemCollectionId+"/SimpleStorage";
         Integer newTaskId = systemsService.getTaskId();
         OffsetDateTime startTime = OffsetDateTime.now();
@@ -506,14 +388,6 @@ public class SystemsController {
 
     @GetMapping("/redfish/v1/Systems/{systemCollectionId}/SimpleStorage/{simpleStorageObjectId}")
     public ResponseEntity<?> getSimpleStorage(@PathVariable String systemCollectionId, @PathVariable String simpleStorageObjectId, @RequestHeader String authorization) throws Exception {
-        String token = authorization.substring(7);
-        if (!apiAuthService.isUserAuthenticated(token)){
-            return ResponseEntity.badRequest().body("There is no valid session established with the implementation.");
-        }
-        if(!apiAuthService.isUserAuthorizedForOperationType(token, "ServiceRoot", "GET")) {
-            return ResponseEntity.internalServerError().body("Service recognized the credentials in the request but those credentials do not possess\n" +
-                    "authorization to complete this request.");
-        }
         String uri = "/redfish/v1/Systems/"+systemCollectionId+"/SimpleStorage/"+simpleStorageObjectId;
         Integer newTaskId = systemsService.getTaskId();
         OffsetDateTime startTime = OffsetDateTime.now();
@@ -535,14 +409,6 @@ public class SystemsController {
 
     @GetMapping("/redfish/v1/Systems/{systemCollectionId}/LogServices")
     public ResponseEntity<?> getLogServiceCollection(@PathVariable String systemCollectionId, @RequestHeader String authorization) throws Exception {
-        String token = authorization.substring(7);
-        if (!apiAuthService.isUserAuthenticated(token)){
-            return ResponseEntity.badRequest().body("There is no valid session established with the implementation.");
-        }
-        if(!apiAuthService.isUserAuthorizedForOperationType(token, "ServiceRoot", "GET")) {
-            return ResponseEntity.internalServerError().body("Service recognized the credentials in the request but those credentials do not possess\n" +
-                    "authorization to complete this request.");
-        }
         String uri = "/redfish/v1/Systems/"+systemCollectionId+"/LogServices";
         Integer newTaskId = systemsService.getTaskId();
         OffsetDateTime startTime = OffsetDateTime.now();
@@ -564,14 +430,6 @@ public class SystemsController {
 
     @GetMapping("/redfish/v1/Systems/{systemCollectionId}/LogServices/{logServiceObjectId}")
     public ResponseEntity<?> getLogServices(@PathVariable String systemCollectionId, @PathVariable String logServiceObjectId, @RequestHeader String authorization) throws Exception {
-        String token = authorization.substring(7);
-        if (!apiAuthService.isUserAuthenticated(token)){
-            return ResponseEntity.badRequest().body("There is no valid session established with the implementation.");
-        }
-        if(!apiAuthService.isUserAuthorizedForOperationType(token, "ServiceRoot", "GET")) {
-            return ResponseEntity.internalServerError().body("Service recognized the credentials in the request but those credentials do not possess\n" +
-                    "authorization to complete this request.");
-        }
         String uri = "/redfish/v1/Systems/"+systemCollectionId+"/LogServices/"+logServiceObjectId;
         Integer newTaskId = systemsService.getTaskId();
         OffsetDateTime startTime = OffsetDateTime.now();
@@ -593,14 +451,6 @@ public class SystemsController {
 
     @GetMapping("/redfish/v1/Systems/{systemCollectionId}/GraphicsControllers")
     public ResponseEntity<?> getGraphicsControllerCollection(@PathVariable String systemCollectionId, @RequestHeader String authorization) throws Exception {
-        String token = authorization.substring(7);
-        if (!apiAuthService.isUserAuthenticated(token)){
-            return ResponseEntity.badRequest().body("There is no valid session established with the implementation.");
-        }
-        if(!apiAuthService.isUserAuthorizedForOperationType(token, "ServiceRoot", "GET")) {
-            return ResponseEntity.internalServerError().body("Service recognized the credentials in the request but those credentials do not possess\n" +
-                    "authorization to complete this request.");
-        }
         String uri = "/redfish/v1/Systems/"+systemCollectionId+"/GraphicsControllers";
         Integer newTaskId = systemsService.getTaskId();
         OffsetDateTime startTime = OffsetDateTime.now();
@@ -622,14 +472,6 @@ public class SystemsController {
 
     @GetMapping("/redfish/v1/Systems/{systemCollectionId}/GraphicsControllers/{graphicsControllerObjectId}")
     public ResponseEntity<?> getGraphicsController(@PathVariable String systemCollectionId, @PathVariable String graphicsControllerObjectId, @RequestHeader String authorization) throws Exception {
-        String token = authorization.substring(7);
-        if (!apiAuthService.isUserAuthenticated(token)){
-            return ResponseEntity.badRequest().body("There is no valid session established with the implementation.");
-        }
-        if(!apiAuthService.isUserAuthorizedForOperationType(token, "ServiceRoot", "GET")) {
-            return ResponseEntity.internalServerError().body("Service recognized the credentials in the request but those credentials do not possess\n" +
-                    "authorization to complete this request.");
-        }
         String uri = "/redfish/v1/Systems/"+systemCollectionId+"/GraphicsControllers/"+graphicsControllerObjectId;
         Integer newTaskId = systemsService.getTaskId();
         OffsetDateTime startTime = OffsetDateTime.now();
@@ -651,14 +493,6 @@ public class SystemsController {
 
     @GetMapping("/redfish/v1/Systems/{systemCollectionId}/USBControllers")
     public ResponseEntity<?> getUSBControllerCollection(@PathVariable String systemCollectionId, @RequestHeader String authorization) throws Exception {
-        String token = authorization.substring(7);
-        if (!apiAuthService.isUserAuthenticated(token)){
-            return ResponseEntity.badRequest().body("There is no valid session established with the implementation.");
-        }
-        if(!apiAuthService.isUserAuthorizedForOperationType(token, "ServiceRoot", "GET")) {
-            return ResponseEntity.internalServerError().body("Service recognized the credentials in the request but those credentials do not possess\n" +
-                    "authorization to complete this request.");
-        }
         String uri = "/redfish/v1/Systems/"+systemCollectionId+"/USBControllers";
         Integer newTaskId = systemsService.getTaskId();
         OffsetDateTime startTime = OffsetDateTime.now();
@@ -680,14 +514,6 @@ public class SystemsController {
 
     @GetMapping("/redfish/v1/Systems/{systemCollectionId}/USBControllers/{uSBControllerObjectId}")
     public ResponseEntity<?> getUSBController(@PathVariable String systemCollectionId, @PathVariable String uSBControllerObjectId, @RequestHeader String authorization) throws Exception {
-        String token = authorization.substring(7);
-        if (!apiAuthService.isUserAuthenticated(token)){
-            return ResponseEntity.badRequest().body("There is no valid session established with the implementation.");
-        }
-        if(!apiAuthService.isUserAuthorizedForOperationType(token, "ServiceRoot", "GET")) {
-            return ResponseEntity.internalServerError().body("Service recognized the credentials in the request but those credentials do not possess\n" +
-                    "authorization to complete this request.");
-        }
         String uri = "/redfish/v1/Systems/"+systemCollectionId+"/USBControllers/"+uSBControllerObjectId;
         Integer newTaskId = systemsService.getTaskId();
         OffsetDateTime startTime = OffsetDateTime.now();
@@ -709,14 +535,6 @@ public class SystemsController {
 
     @GetMapping("/redfish/v1/Systems/{systemCollectionId}/Certificates")
     public ResponseEntity<?> getCertificateCollection(@PathVariable String systemCollectionId, @RequestHeader String authorization) throws Exception {
-        String token = authorization.substring(7);
-        if (!apiAuthService.isUserAuthenticated(token)){
-            return ResponseEntity.badRequest().body("There is no valid session established with the implementation.");
-        }
-        if(!apiAuthService.isUserAuthorizedForOperationType(token, "ServiceRoot", "GET")) {
-            return ResponseEntity.internalServerError().body("Service recognized the credentials in the request but those credentials do not possess\n" +
-                    "authorization to complete this request.");
-        }
         String uri = "/redfish/v1/Systems/"+systemCollectionId+"/Certificates";
         Integer newTaskId = systemsService.getTaskId();
         OffsetDateTime startTime = OffsetDateTime.now();
@@ -738,14 +556,6 @@ public class SystemsController {
 
     @GetMapping("/redfish/v1/Systems/{systemCollectionId}/Certificates/{certificateObjectId}")
     public ResponseEntity<?> getCertificate(@PathVariable String systemCollectionId, @PathVariable String certificateObjectId, @RequestHeader String authorization) throws Exception {
-        String token = authorization.substring(7);
-        if (!apiAuthService.isUserAuthenticated(token)){
-            return ResponseEntity.badRequest().body("There is no valid session established with the implementation.");
-        }
-        if(!apiAuthService.isUserAuthorizedForOperationType(token, "ServiceRoot", "GET")) {
-            return ResponseEntity.internalServerError().body("Service recognized the credentials in the request but those credentials do not possess\n" +
-                    "authorization to complete this request.");
-        }
         String uri = "/redfish/v1/Systems/"+systemCollectionId+"/Certificates/"+certificateObjectId;
         Integer newTaskId = systemsService.getTaskId();
         OffsetDateTime startTime = OffsetDateTime.now();
@@ -767,14 +577,6 @@ public class SystemsController {
 
     @GetMapping("/redfish/v1/Systems/{systemCollectionId}/VirtualMedia")
     public ResponseEntity<?> getVirtualMediaCollection(@PathVariable String systemCollectionId, @RequestHeader String authorization) throws Exception {
-        String token = authorization.substring(7);
-        if (!apiAuthService.isUserAuthenticated(token)){
-            return ResponseEntity.badRequest().body("There is no valid session established with the implementation.");
-        }
-        if(!apiAuthService.isUserAuthorizedForOperationType(token, "ServiceRoot", "GET")) {
-            return ResponseEntity.internalServerError().body("Service recognized the credentials in the request but those credentials do not possess\n" +
-                    "authorization to complete this request.");
-        }
         String uri = "/redfish/v1/Systems/"+systemCollectionId+"/VirtualMedia";
         Integer newTaskId = systemsService.getTaskId();
         OffsetDateTime startTime = OffsetDateTime.now();
@@ -796,14 +598,6 @@ public class SystemsController {
 
     @GetMapping("/redfish/v1/Systems/{systemCollectionId}/VirtualMedia/{virtualMediaObjectId}")
     public ResponseEntity<?> getVirtualMedia(@PathVariable String systemCollectionId, @PathVariable String virtualMediaObjectId, @RequestHeader String authorization) throws Exception {
-        String token = authorization.substring(7);
-        if (!apiAuthService.isUserAuthenticated(token)){
-            return ResponseEntity.badRequest().body("There is no valid session established with the implementation.");
-        }
-        if(!apiAuthService.isUserAuthorizedForOperationType(token, "ServiceRoot", "GET")) {
-            return ResponseEntity.internalServerError().body("Service recognized the credentials in the request but those credentials do not possess\n" +
-                    "authorization to complete this request.");
-        }
         String uri = "/redfish/v1/Systems/"+systemCollectionId+"/VirtualMedia/"+virtualMediaObjectId;
         Integer newTaskId = systemsService.getTaskId();
         OffsetDateTime startTime = OffsetDateTime.now();
@@ -825,14 +619,6 @@ public class SystemsController {
 
     @GetMapping("/redfish/v1/Systems/{systemCollectionId}/VirtualMedia/{virtualMediaObjectId}/Certificates")
     public ResponseEntity<?> getVirtualMediaCertificateCollection(@PathVariable String systemCollectionId, @PathVariable String virtualMediaObjectId, @RequestHeader String authorization) throws Exception{
-        String token = authorization.substring(7);
-        if (!apiAuthService.isUserAuthenticated(token)){
-            return ResponseEntity.badRequest().body("There is no valid session established with the implementation.");
-        }
-        if(!apiAuthService.isUserAuthorizedForOperationType(token, "ServiceRoot", "GET")) {
-            return ResponseEntity.internalServerError().body("Service recognized the credentials in the request but those credentials do not possess\n" +
-                    "authorization to complete this request.");
-        }
         String uri = "/redfish/v1/Systems/"+systemCollectionId+"/VirtualMedia/"+virtualMediaObjectId+"/Certificates";
         Integer newTaskId = systemsService.getTaskId();
         OffsetDateTime startTime = OffsetDateTime.now();
@@ -854,14 +640,6 @@ public class SystemsController {
 
     @GetMapping("/redfish/v1/Systems/{systemCollectionId}/VirtualMedia/{virtualMediaObjectId}/Certificates/{certificateObjectId}")
     public ResponseEntity<?> getVirtualMediaCertificate(@PathVariable String systemCollectionId, @PathVariable String virtualMediaObjectId, @PathVariable String certificateObjectId, @RequestHeader String authorization) throws Exception{
-        String token = authorization.substring(7);
-        if (!apiAuthService.isUserAuthenticated(token)){
-            return ResponseEntity.badRequest().body("There is no valid session established with the implementation.");
-        }
-        if(!apiAuthService.isUserAuthorizedForOperationType(token, "ServiceRoot", "GET")) {
-            return ResponseEntity.internalServerError().body("Service recognized the credentials in the request but those credentials do not possess\n" +
-                    "authorization to complete this request.");
-        }
         String uri = "/redfish/v1/Systems/"+systemCollectionId+"/VirtualMedia/"+virtualMediaObjectId+"/Certificates/"+certificateObjectId;
         Integer newTaskId = systemsService.getTaskId();
         OffsetDateTime startTime = OffsetDateTime.now();

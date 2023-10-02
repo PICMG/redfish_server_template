@@ -32,7 +32,6 @@ import org.picmg.redfish_server_template.services.RedfishErrorResponseService;
 import org.picmg.redfish_server_template.services.RootService;
 import org.picmg.redfish_server_template.services.actions.ActionHandler;
 import org.picmg.redfish_server_template.services.actions.ActionHandlerFactory;
-import org.picmg.redfish_server_template.services.apiAuth.APIAuthService;
 import org.json.JSONException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -40,9 +39,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.servlet.view.RedirectView;
 
@@ -68,10 +65,6 @@ public class RootController {
 
     @Autowired
     ActionHandler actionHandler;
-
-    @Autowired
-    APIAuthService apiAuthService;
-
 
     @Autowired
     RootService rootService;
@@ -182,10 +175,6 @@ public class RootController {
 
     @RequestMapping(value = { "/v1/*/Actions/{resourceType}.{actionName}", "/v1/*/*/Actions/{resourceType}.{actionName}","/v1/*/*/*/Actions/{resourceType}.{actionName}", "/v1/*/*/*/*/Actions/{resourceType}.{actionName}", "/v1/*/*/*/*/*/Actions/{resourceType}.{actionName}"}, method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> postActions(@RequestHeader String authorization, @RequestBody String requestBody, @PathVariable String resourceType, @PathVariable String actionName, HttpServletRequest request) throws Exception {
-        String token = authorization.substring(7);
-        if (!apiAuthService.isUserAuthenticated(token)){
-            return ResponseEntity.badRequest().body(errorResponseService.getNoValidSessionErrorResponse());
-        }
         String uri = request.getRequestURI();
         Integer newTaskId = rootService.getTaskId();
         OffsetDateTime startTime = OffsetDateTime.now();
@@ -261,10 +250,6 @@ public class RootController {
 
     @RequestMapping(value = { "/v1/*/Actions/{resourceType}.{actionName}", "/v1/*/*/Actions/{resourceType}.{actionName}","/v1/*/*/*/Actions/{resourceType}.{actionName}", "/v1/*/*/*/*/Actions/{resourceType}.{actionName}", "/v1/*/*/*/*/*/Actions/{resourceType}.{actionName}"}, method = RequestMethod.POST)
     public ResponseEntity<?> postActions(@RequestHeader String authorization, @PathVariable String resourceType, @PathVariable String actionName,HttpServletRequest request) throws Exception {
-        String token = authorization.substring(7);
-        if (!apiAuthService.isUserAuthenticated(token)){
-            return ResponseEntity.badRequest().body(errorResponseService.getNoValidSessionErrorResponse());
-        }
         String uri = request.getRequestURI();
         Integer newTaskId = rootService.getTaskId();
         OffsetDateTime startTime = OffsetDateTime.now();

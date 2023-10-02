@@ -22,11 +22,8 @@
 package org.picmg.redfish_server_template.controllers;
 
 import org.picmg.redfish_server_template.RFmodels.AllModels.MessageRegistry_MessageRegistry;
-import org.picmg.redfish_server_template.RFmodels.AllModels.PrivilegeRegistry_PrivilegeRegistry;
 import org.picmg.redfish_server_template.repository.MessageRegistryRepository;
 import org.picmg.redfish_server_template.services.PasswordEncryptorService;
-import org.picmg.redfish_server_template.services.apiAuth.APIAuthService;
-import org.picmg.redfish_server_template.services.apiAuth.PrivilegeRegistryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -37,20 +34,12 @@ import java.util.List;
 public class TestController {
 
     @Autowired
-    PrivilegeRegistryService privilegeRegistryService;
-
-    @Autowired
     MessageRegistryRepository messageRegistryRepository;
-
-
-    @Autowired
-    APIAuthService apiAuthService;
-
 
     @Autowired
     PasswordEncryptorService passwordEncryptorService;
 
-    @GetMapping("/privilege")
+/*    @GetMapping("/privilege")
     public List<PrivilegeRegistry_PrivilegeRegistry> getPrivileges(@RequestHeader String authorization) {
 
         String token = authorization.substring(7);
@@ -58,7 +47,7 @@ public class TestController {
 
         return privilegeRegistryService.getAllPrivilegesList();
     }
-
+*/
 
     @GetMapping("/messageR")
     public List<MessageRegistry_MessageRegistry> getMessageRegistryList() {

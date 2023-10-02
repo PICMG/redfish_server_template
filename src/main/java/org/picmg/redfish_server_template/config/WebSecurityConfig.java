@@ -21,9 +21,8 @@
 
 package org.picmg.redfish_server_template.config;
 
-import org.json.JSONArray;
-import org.picmg.redfish_server_template.RFmodels.custom.OdataFile;
-import org.picmg.redfish_server_template.repository.OdataFileRepository;
+import org.picmg.redfish_server_template.repository.PrivilegeTableRepository;
+import org.picmg.redfish_server_template.repository.AccountService.RedfishAuthorizationManager;
 import org.picmg.redfish_server_template.services.jwt.JWTRequestFilters;
 import org.picmg.redfish_server_template.services.SessionService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,14 +37,12 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.json.JSONObject;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
 
 @EnableWebSecurity
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
+    @Autowired
+    PrivilegeTableRepository privilegeTableRepository;
+
     @Autowired
     SessionService sessionService;
 
@@ -57,7 +54,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         auth.userDetailsService(sessionService);
     }
 
-    public RedfishAuthorizationManager redfishAuthorizationManager = new RedfishAuthorizationManager();
+    @Autowired
+    RedfishAuthorizationManager redfishAuthorizationManager;
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
@@ -74,6 +72,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                                 .antMatchers("/redfish/v1/").permitAll()
                                 .antMatchers("/redfish/v1/odata").permitAll()
                                 .antMatchers("/redfish/v1/$metadata").permitAll()
+                                .antMatchers(HttpMethod.POST, "/redfish/v1/SessionService/Sessions").permitAll()
                                 .antMatchers("/redfish/v1/EventService/SSE").permitAll()
                                 .anyRequest().access(redfishAuthorizationManager)
                 )

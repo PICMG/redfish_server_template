@@ -26,7 +26,6 @@ import org.picmg.redfish_server_template.RFmodels.AllModels.Session_Session;
 import org.picmg.redfish_server_template.RFmodels.AllModels.ManagerAccount_ManagerAccount;
 import org.picmg.redfish_server_template.dto.SessionLoginDTO;
 import org.picmg.redfish_server_template.services.RedfishErrorResponseService;
-import org.picmg.redfish_server_template.services.apiAuth.APIAuthService;
 import org.picmg.redfish_server_template.services.jwt.JWTService;
 import org.picmg.redfish_server_template.services.SessionService;
 import org.hibernate.UnknownProfileException;
@@ -54,9 +53,6 @@ public class SessionController {
 
     @Autowired
     JWTService jwtService;
-
-    @Autowired
-    APIAuthService apiAuthService;
 
     @Autowired
     RedfishErrorResponseService errorResponseService;
@@ -113,17 +109,6 @@ public class SessionController {
     }
     @RequestMapping(value="/Sessions", method=RequestMethod.PATCH, consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> updateSession(@RequestBody Session_Session session, @RequestHeader(value="Authorization", required=false) String authorization) throws Exception {
-
-        String token = authorization.substring(7);
-        Boolean isUserAuthenticated = apiAuthService.isUserAuthenticated(token);
-        if (!isUserAuthenticated){
-            return ResponseEntity.badRequest().body(errorResponseService.getNoValidSessionErrorResponse());
-        }
-        Boolean isAPIAuthorized = apiAuthService.isUserAuthorizedForOperationType(token, "SessionService", "PATCH");
-
-        if(!isAPIAuthorized) {
-            return ResponseEntity.internalServerError().body(errorResponseService.getInsufficientPrivilegeErrorResponse());
-        }
         if(session.getId() == null)
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Request could not be processed because it contains invalid information");
 
@@ -135,17 +120,6 @@ public class SessionController {
 
     @RequestMapping(value="", method=RequestMethod.PATCH, consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> updateSessionService(@RequestBody SessionService_SessionService sessionService1, @RequestHeader(value="Authorization", required=false) String authorization) throws Exception {
-
-        String token = authorization.substring(7);
-        Boolean isUserAuthenticated = apiAuthService.isUserAuthenticated(token);
-        if (!isUserAuthenticated){
-            return ResponseEntity.badRequest().body(errorResponseService.getNoValidSessionErrorResponse());
-        }
-        Boolean isAPIAuthorized = apiAuthService.isUserAuthorizedForOperationType(token, "SessionService", "PATCH");
-
-        if(!isAPIAuthorized) {
-            return ResponseEntity.internalServerError().body(errorResponseService.getInsufficientPrivilegeErrorResponse());
-        }
         if(sessionService1 == null)
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Request could not be processed because it contains invalid information");
 
@@ -154,17 +128,6 @@ public class SessionController {
 
     @RequestMapping(value = "/Sessions/{id}", method = RequestMethod.DELETE)
     public ResponseEntity<?> deleteSession(@RequestHeader(value="Authorization", required=false) String authorization, @PathVariable("id") String id) throws Exception {
-/*        String token = authorization.substring(7);
-        Boolean isUserAuthenticated = apiAuthService.isUserAuthenticated(token);
-        if (!isUserAuthenticated){
-            return ResponseEntity.badRequest().body(errorResponseService.getNoValidSessionErrorResponse());
-        }
-        Boolean isAPIAuthorized = apiAuthService.isUserAuthorizedForOperationType(token, "Session", "DELETE");
-
-        if(!isAPIAuthorized) {
-            return ResponseEntity.internalServerError().body(errorResponseService.getInsufficientPrivilegeErrorResponse());
-        }
-*/
         if(id == null)
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("ID cannot be null");
         sessionService.deleteMemberFromSessionCollection(id);
@@ -176,33 +139,11 @@ public class SessionController {
     }
     @RequestMapping(value="/Sessions", method=RequestMethod.GET)
     public ResponseEntity<?> getSessionCollection(@RequestHeader(value="Authorization", required=false) String authorization) throws Exception {
-/*        String token = authorization.substring(7);
-        Boolean isUserAuthenticated = apiAuthService.isUserAuthenticated(token);
-        if (!isUserAuthenticated){
-            return ResponseEntity.badRequest().body(errorResponseService.getNoValidSessionErrorResponse());
-        }
-        Boolean isAPIAuthorized = apiAuthService.isUserAuthorizedForOperationType(token, "SessionCollection", "GET");
-
-        if(!isAPIAuthorized) {
-            return ResponseEntity.badRequest().body(errorResponseService.getInsufficientPrivilegeErrorResponse());
-        }
-*/
         return ResponseEntity.ok().body(sessionService.getSessionCollection());
     }
 
     @RequestMapping(value="", method=RequestMethod.GET)
     public ResponseEntity<?> getSessionService(@RequestHeader(value="Authorization", required=false) String authorization) throws Exception {
-/*        String token = authorization.substring(7);
-        Boolean isUserAuthenticated = apiAuthService.isUserAuthenticated(token);
-        if (!isUserAuthenticated){
-            return ResponseEntity.badRequest().body(errorResponseService.getNoValidSessionErrorResponse());
-        }
-        Boolean isAPIAuthorized = apiAuthService.isUserAuthorizedForOperationType(token, "SessionService", "GET");
-
-        if(!isAPIAuthorized) {
-            return ResponseEntity.internalServerError().body(errorResponseService.getInsufficientPrivilegeErrorResponse());
-        }
-*/
         return ResponseEntity.ok().body(sessionService.getSessionService());
 
     }

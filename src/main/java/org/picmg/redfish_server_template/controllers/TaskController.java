@@ -26,7 +26,6 @@ import org.picmg.redfish_server_template.RFmodels.AllModels.Task_Task;
 import org.picmg.redfish_server_template.RFmodels.custom.TaskMonitor;
 import org.picmg.redfish_server_template.services.QueryParameterService;
 import org.picmg.redfish_server_template.services.TaskService;
-import org.picmg.redfish_server_template.services.apiAuth.APIAuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.http.HttpHeaders;
@@ -49,24 +48,10 @@ public class TaskController {
     TaskService taskService;
 
     @Autowired
-    APIAuthService apiAuthService;
-
-    @Autowired
     QueryParameterService queryParameterService;
 
     @GetMapping("/Tasks")
     public ResponseEntity<?> getAll(@RequestHeader String authorization, @RequestParam Map<String, String> params) throws Exception {
-        String token = authorization.substring(7);
-        Boolean isUserAuthenticated = apiAuthService.isUserAuthenticated(token);
-        if (!isUserAuthenticated){
-            return ResponseEntity.badRequest().body("There is no valid session established with the implementation.");
-        }
-        Boolean isAPIAuthorized = apiAuthService.isUserAuthorizedForOperationType(token, controllerEntityName, "GET");
-        if(!isAPIAuthorized) {
-            return ResponseEntity.internalServerError().body("Service recognized the credentials in the request but those credentials do not possess\n" +
-                    "authorization to complete this request.");
-        }
-
         if(params.isEmpty())
             return ResponseEntity.ok().body(taskService.getAllTaskDetails());
         List<Task_Task> objectList = taskService.getAllTaskDetails();
@@ -82,16 +67,8 @@ public class TaskController {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Querying is not supported on the requested resource.");
     }
 
-    @GetMapping("/Task/{Id}")
+    @GetMapping("/Tasks/{Id}")
     public ResponseEntity<?> getById(@RequestHeader String authorization, @PathVariable String Id) throws Exception {
-        String token = authorization.substring(7);
-        if (!apiAuthService.isUserAuthenticated(token)) {
-            return ResponseEntity.badRequest().body("There is no valid session established with the implementation.");
-        }
-        if(!apiAuthService.isUserAuthorizedForOperationType(token, controllerEntityName, "GET")) {
-            return ResponseEntity.internalServerError().body("Service recognized the credentials in the request but those credentials do not possess\n" +
-                    "authorization to complete this request.");
-        }
         Task_Task task = taskService.getTask(Id);
         if(task == null) {
             return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Request succeeded, but no content is being returned in the body of the response.");
@@ -100,18 +77,8 @@ public class TaskController {
     }
 
 
-    @GetMapping("/Task/{Id}/monitor")
+    @GetMapping("/Tasks/{Id}/monitor")
     public ResponseEntity<?> getMonitorById(@RequestHeader String authorization, @PathVariable String Id) throws Exception {
-        String token = authorization.substring(7);
-        Boolean isUserAuthenticated = apiAuthService.isUserAuthenticated(token);
-        if (!isUserAuthenticated){
-            return ResponseEntity.badRequest().body("There is no valid session established with the implementation.");
-        }
-        Boolean isAPIAuthorized = apiAuthService.isUserAuthorizedForOperationType(token, controllerEntityName, "GET");
-        if(!isAPIAuthorized) {
-            return ResponseEntity.internalServerError().body("Service recognized the credentials in the request but those credentials do not possess\n" +
-                    "authorization to complete this request.");
-        }
         TaskMonitor taskMonitor = null;
         try {
             taskMonitor = taskService.getTaskMonitor(Id);
@@ -123,19 +90,8 @@ public class TaskController {
         return ResponseEntity.status(HttpStatus.OK).body(taskMonitor);
     }
 
-    @RequestMapping(value = "/Task", method= RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(value = "/Tasks", method= RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> addTask(@RequestBody Task_Task task, @RequestHeader String authorization) throws Exception {
-        String token = authorization.substring(7);
-        Boolean isUserAuthenticated = apiAuthService.isUserAuthenticated(token);
-        if (!isUserAuthenticated){
-            return ResponseEntity.badRequest().body("There is no valid session established with the implementation.");
-        }
-        Boolean isAPIAuthorized = apiAuthService.isUserAuthorizedForOperationType(token, controllerEntityName, "POST");
-        if(!isAPIAuthorized) {
-            return ResponseEntity.internalServerError().body("Service recognized the credentials in the request but those credentials do not possess\n" +
-                    "authorization to complete this request.");
-        }
-
         try {
             task = taskService.addTask(task);
             HttpHeaders responseHeaders = new HttpHeaders();
@@ -147,40 +103,17 @@ public class TaskController {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Request could not be processed because it contains invalid information");
     }
 
-    @RequestMapping(value="/Task", method=RequestMethod.DELETE, consumes = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(value="/Tasks", method=RequestMethod.DELETE, consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> deleteTask(@RequestBody Task_Task task, @RequestHeader String authorization) throws Exception {
-        String token = authorization.substring(7);
-        Boolean isUserAuthenticated = apiAuthService.isUserAuthenticated(token);
-        if (!isUserAuthenticated){
-            return ResponseEntity.badRequest().body("There is no valid session established with the implementation.");
-        }
-        Boolean isAPIAuthorized = apiAuthService.isUserAuthorizedForOperationType(token, controllerEntityName, "DELETE");
-        if(!isAPIAuthorized) {
-            return ResponseEntity.internalServerError().body("Service recognized the credentials in the request but those credentials do not possess" +
-                    "authorization to complete this request.");
-        }
-
         if(taskService.deleteTask(task))
             return ResponseEntity.ok(task);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(String.format("The requested resource of type '%1' named %2 was not found.", "Session", task.getName()));
     }
 
-    @RequestMapping(value="/Task", method = RequestMethod.PUT, consumes = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(value="/Tasks", method = RequestMethod.PUT, consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> updateTask(@RequestBody Task_Task task, @RequestHeader String authorization) throws Exception {
-        String token = authorization.substring(7);
-        Boolean isUserAuthenticated = apiAuthService.isUserAuthenticated(token);
-        if (!isUserAuthenticated){
-            return ResponseEntity.badRequest().body("There is no valid session established with the implementation.");
-        }
-        Boolean isAPIAuthorized = apiAuthService.isUserAuthorizedForOperationType(token, controllerEntityName, "PUT");
-        if(!isAPIAuthorized) {
-            return ResponseEntity.internalServerError().body("Service recognized the credentials in the request but those credentials do not possess" +
-                    "authorization to complete this request.");
-        }
-
         if(taskService.updateTask(task, null))
             return ResponseEntity.ok("The request completed successfully");
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Request could not be processed because it contains invalid information");
     }
-
 }

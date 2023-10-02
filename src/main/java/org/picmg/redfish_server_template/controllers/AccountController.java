@@ -22,7 +22,6 @@
 package org.picmg.redfish_server_template.controllers;
 
 import org.picmg.redfish_server_template.RFmodels.AllModels.*;
-import org.picmg.redfish_server_template.dto.AccountDTO;
 import org.picmg.redfish_server_template.repository.AccountService.AccountServiceRepository;
 import org.picmg.redfish_server_template.repository.AccountService.ManagerAccountCollectionRepository;
 import org.picmg.redfish_server_template.repository.AccountService.RoleCollectionRepository;
@@ -30,7 +29,6 @@ import org.picmg.redfish_server_template.repository.RolesRepository;
 import org.picmg.redfish_server_template.services.AccountService;
 import org.picmg.redfish_server_template.services.QueryParameterService;
 import org.picmg.redfish_server_template.services.RedfishErrorResponseService;
-import org.picmg.redfish_server_template.services.apiAuth.APIAuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.crossstore.ChangeSetPersister;
@@ -41,10 +39,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
 import java.time.OffsetDateTime;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -66,9 +62,6 @@ public class AccountController {
 
     @Autowired
     AccountService accountService;
-
-    @Autowired
-    APIAuthService apiAuthService;
 
     @Autowired
     QueryParameterService queryParameterService;

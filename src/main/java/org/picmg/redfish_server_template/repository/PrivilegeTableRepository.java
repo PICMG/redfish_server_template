@@ -20,18 +20,15 @@
 //*******************************************************************************************************
 
 
-package org.picmg.redfish_server_template.repository.AccountService;
+package org.picmg.redfish_server_template.repository;
 
-import org.picmg.redfish_server_template.RFmodels.AllModels.ManagerAccount_ManagerAccount;
 import org.picmg.redfish_server_template.RFmodels.custom.PrivilegeTableEntry;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
-import org.springframework.security.core.GrantedAuthority;
+import org.springframework.stereotype.Component;
 
-import java.util.Collection;
-
-public interface PrivilegeTableRepository extends MongoRepository<PrivilegeTableEntry, String> {
-
-    @Query(value="{ 'id' : ?0 }")
-    ManagerAccount_ManagerAccount getById(String id);
+@Component("privilegeTableRepository")
+public interface PrivilegeTableRepository extends MongoRepository<PrivilegeTableEntry, Object> {
+    @Query(value="{ 'Id': ?0 }")
+    PrivilegeTableEntry getById(String Id);
 }
