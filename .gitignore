@@ -4,3 +4,5 @@ target/**
 /src/main/java/org/picmg/redfish_server_template/config/certs/**
 /src/main/java/org/picmg/redfish_server_template/RFmodels/*.yaml
 .idea/**
+/src/main/resources/redfish.p12
+/src/main/resources/application-server.yml
