@@ -21,6 +21,8 @@
 
 package org.picmg.redfish_server_template.controllers;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.picmg.redfish_server_template.RFmodels.AllModels.ActionInfo_ActionInfo;
 import org.picmg.redfish_server_template.RFmodels.AllModels.ActionInfo_Parameters;
 import org.picmg.redfish_server_template.RFmodels.AllModels.RedfishError;
@@ -112,7 +114,18 @@ public class RootController {
         }
         if(rootList.size() ==0)
             return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Request succeeded, but no content is being returned in the body of the response.");
-        return ResponseEntity.ok().body(rootList.get(0));
+
+
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        String json = "{}";
+        try {
+            json = mapper.writeValueAsString(rootList.get(0));
+        } catch (Exception ignored) {
+
+        }
+
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(json);
     }
 
 
