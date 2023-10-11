@@ -22,15 +22,14 @@
 
 package org.picmg.redfish_server_template.services;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.picmg.redfish_server_template.RFmodels.AllModels.*;
 import org.picmg.redfish_server_template.repository.MessageRegistryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 @Service
 public class RedfishErrorResponseService {
@@ -607,4 +606,53 @@ public class RedfishErrorResponseService {
         }
         return redfishError;
     }
+
+    public RedfishError getErrorMessage(String registryPrefix, String messageName, List<String> messageArgs, List<String> relatedProperties) {
+        // populate the messageRegistry cache.
+        if(messageRegistryList==null) {
+            messageRegistryList = messageRegistryRepository.findAll();
+        }
+
+        RedfishError redfishError = new RedfishError();
+        // find the registry for the requested error message
+        for(MessageRegistry_MessageRegistry messageRegistry: messageRegistryList) {
+            if(messageRegistry.getRegistryPrefix().equalsIgnoreCase(registryPrefix)) {
+                // Registry has been found, now find the requested message
+                LinkedHashMap<String,LinkedHashMap<String, String>> messageLinkedHashMap = (LinkedHashMap<String, LinkedHashMap<String, String>>) messageRegistry.getMessages();
+                LinkedHashMap<String, String> messageRegistryMessage = messageLinkedHashMap.get(messageName);
+
+                // set the code and message information
+                RedfishErrorError redfishErrorError = new RedfishErrorError();
+                redfishErrorError.setCode(messageRegistry.getId()+"."+messageName);
+                String message = messageRegistryMessage.get("Message");
+
+                // fill in the fields in the message with the error info given
+                for (int i=0;i<messageArgs.size();i++) {
+                    if (message.contains("%"+Integer.toString(i+1)+" ")) {
+                        message = message.replace(
+                                "%"+Integer.toString(i+1)+" ",
+                                messageArgs.get(i)+" ");
+                    }
+                }
+                redfishErrorError.setMessage(message);
+
+                // populate the extended message information from the
+                // registry information.
+                List<Message_Message> messageExtendedInfoList = new ArrayList<>();
+                Message_Message messageExtendedInfo = new Message_Message();
+                messageExtendedInfo.setSeverity(messageRegistryMessage.get("Severity"));
+                messageExtendedInfo.setMessageSeverity(ResourceHealth.fromValue(messageRegistryMessage.get("MessageSeverity")));
+                messageExtendedInfo.setResolution(messageRegistryMessage.get("Resolution"));
+                messageExtendedInfo.setMessageId(messageRegistry.getId()+"."+messageName);
+                messageExtendedInfo.setMessage(message);
+                messageExtendedInfo.setMessageArgs(messageArgs);
+                messageExtendedInfo.setRelatedProperties(relatedProperties);
+                messageExtendedInfoList.add(messageExtendedInfo);
+                redfishErrorError.setAtMessageExtendedInfo(messageExtendedInfoList);
+                redfishError.setError(redfishErrorError);
+            }
+        }
+        return redfishError;
+    }
+
 }

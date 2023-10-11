@@ -6,7 +6,6 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
-import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -24,10 +23,10 @@ public class CachedSchema {
 
   @JsonProperty("schema")
   @Field("schema")
-  private Map<String, Object> schema;
+  private String schema;
 
   public String getSource() {return source;}
-  public Map<String, Object> getSchema() {
+  public String getSchema() {
     return schema;
   }
 
