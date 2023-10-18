@@ -161,14 +161,14 @@ class RedfishCollectionController<T extends RedfishCollection, V extends Redfish
 
     @PostMapping()
     public ResponseEntity<?> post(@ValidRedfishObject("unused") W obj, HttpServletRequest request) {
-        // phase 1, attempt to create new object from the body of the request
-
-        // phase 2, post-creation checks - these are object dependent.  For instance,
+        // Step 1, post-creation checks - these are class-specific.  For instance,
         // do resources pointed to by links in the object exist?
 
-        // phase 3, Assign service-defined fields
+        // Step 2, Assign class-specific fields
 
-        // phase 4, Add the object to the database and update the collection
+        // Step 3, Add the object to the database and update the collection
+
+        // Step 4, Any post-addition steps that are class-dependent
 
         return null;
     }
