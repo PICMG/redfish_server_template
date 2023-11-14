@@ -28,11 +28,17 @@ public class PrivilegeTableEntry {
     @Field("uri")
     private String uri;
 
+    @JsonProperty("Entity")
+    @Field("Entity")
+    private String entity;
+
     @JsonProperty("OperationMap")
     @Field("OperationMap")
     private Map<String, Object> operationMap;
 
     public String getUri() {return uri;}
+
+    public String getEntity() {return entity;}
 
     public boolean isMatchingUrl(String uri) {
         Pattern regex = Pattern.compile(this.uri);

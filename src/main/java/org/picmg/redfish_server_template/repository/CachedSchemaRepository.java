@@ -26,6 +26,8 @@ import org.picmg.redfish_server_template.RFmodels.custom.CachedSchema;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
 
+import java.util.List;
+
 public interface CachedSchemaRepository extends MongoRepository<CachedSchema, String> {
     @Query(value="{ 'Id' : ?0 }")
     CachedSchema getById(String Id);

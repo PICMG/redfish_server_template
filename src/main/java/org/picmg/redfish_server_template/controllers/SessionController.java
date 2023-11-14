@@ -21,9 +21,7 @@
 
 package org.picmg.redfish_server_template.controllers;
 
-import org.picmg.redfish_server_template.RFmodels.AllModels.SessionService_SessionService;
-import org.picmg.redfish_server_template.RFmodels.AllModels.Session_Session;
-import org.picmg.redfish_server_template.RFmodels.AllModels.ManagerAccount_ManagerAccount;
+import org.picmg.redfish_server_template.RFmodels.custom.RedfishObject;
 import org.picmg.redfish_server_template.dto.SessionLoginDTO;
 import org.picmg.redfish_server_template.services.RedfishErrorResponseService;
 import org.picmg.redfish_server_template.services.jwt.JWTService;
@@ -44,8 +42,7 @@ import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/redfish/v1/SessionService")
-public class SessionController {
+public class SessionController extends RedfishObjectController {
     @Autowired
     SessionService sessionService;
     @Autowired
@@ -57,28 +54,28 @@ public class SessionController {
     @Autowired
     RedfishErrorResponseService errorResponseService;
 
-    @RequestMapping(value = "/Sessions", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> Session(@RequestBody SessionLoginDTO account) throws IOException, NoSuchAlgorithmException {
-        ManagerAccount_ManagerAccount user = sessionService.validateUser(account.getUserName());
+    @RequestMapping(value = "/redfish/v1/SessionService/Sessions", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> sessionPost(@RequestBody SessionLoginDTO account) throws IOException, NoSuchAlgorithmException {
+        RedfishObject user = sessionService.validateUser(account.getUserName());
         try {
             if (user == null){
                 return ResponseEntity.badRequest().body("Username or Password is Incorrect");
             }
-            if (user.getPassword().get().compareTo(account.getPassword()) != 0){
+            if (user.get("Password").toString().compareTo(account.getPassword()) != 0){
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Username or Password is Incorrect");
             }
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(account.getUserName(), account.getPassword())
             );
-            Session_Session session = new Session_Session();
-            session.id(UUID.randomUUID().toString());
-            session.name("User Session");
-            session.description("Manager User Session");
-            session.userName(user.getUserName());
-            session.atOdataId("/redfish/v1/SessionService/Sessions/" + session.getId());
-            session.setCreatedTime(JsonNullable.of(OffsetDateTime.now()));
+            RedfishObject session = new RedfishObject();
+            session.setId(UUID.randomUUID().toString());
+            session.setName("User Session");
+            session.setDescription("Manager User Session");
+            session.put("UserName",user.get("UserName"));
+            session.setAtOdataId("/redfish/v1/SessionService/Sessions/" + session.getId());
+            session.setAtOdataType("Session_Session");
+            session.put("CreatedTime",JsonNullable.of(OffsetDateTime.now()));
             sessionService.addSession(session);
-            sessionService.addMemberToSessionCollection(session.getAtOdataId());
             String jwt = jwtService.generateToken(user, session.getId());
             HttpHeaders headers = new HttpHeaders();
             headers.add(HttpHeaders.LOCATION, session.getAtOdataId());
@@ -94,19 +91,7 @@ public class SessionController {
         return ResponseEntity.badRequest().body("");
     }
 
-    @GetMapping (value="/Sessions/{id}")
-    public ResponseEntity<?> Session(@RequestHeader(value="Authorization", required=false) String authorization, @PathVariable("id") String id) throws Exception {
-/*        String token = authorization.substring(7);
-        if (!apiAuthService.isUserAuthenticated(token)){
-            return ResponseEntity.badRequest().body(errorResponseService.getNoValidSessionErrorResponse());
-        }
-        if(!apiAuthService.isUserAuthorizedForOperationType(token, "Session", "GET")) {
-            return ResponseEntity.internalServerError().body(errorResponseService.getInsufficientPrivilegeErrorResponse());
-        }
-*/
-        //SessionV140Session session = sessionService.getSessionById(id);
-        return ResponseEntity.ok().body(sessionService.getSessionById(id));
-    }
+    /* TODO: add back later?
     @RequestMapping(value="/Sessions", method=RequestMethod.PATCH, consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> updateSession(@RequestBody Session_Session session, @RequestHeader(value="Authorization", required=false) String authorization) throws Exception {
         if(session.getId() == null)
@@ -117,7 +102,8 @@ public class SessionController {
             return ResponseEntity.ok(errorResponseService.getSuccessResponse());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Request could not be processed because it contains invalid information");
     }
-
+*/
+    /* TODO: add back later?
     @RequestMapping(value="", method=RequestMethod.PATCH, consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> updateSessionService(@RequestBody SessionService_SessionService sessionService1, @RequestHeader(value="Authorization", required=false) String authorization) throws Exception {
         if(sessionService1 == null)
@@ -147,4 +133,6 @@ public class SessionController {
         return ResponseEntity.ok().body(sessionService.getSessionService());
 
     }
+
+     */
 }

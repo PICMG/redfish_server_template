@@ -2,6 +2,8 @@ package org.picmg.redfish_server_template.repository.AccountService;
 
 import org.picmg.redfish_server_template.RFmodels.custom.PrivilegeTableEntry;
 import org.picmg.redfish_server_template.repository.PrivilegeTableRepository;
+import org.picmg.redfish_server_template.services.PrivilegeTableService;
+import org.picmg.redfish_server_template.services.SchemaService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.access.AccessDeniedException;
@@ -19,19 +21,17 @@ import java.util.function.Supplier;
 @Component
 public final class RedfishAuthorizationManager implements AuthorizationManager<RequestAuthorizationContext> {
     @Autowired
-    PrivilegeTableRepository privilegeTableRepository;
+    PrivilegeTableService privilegeTableService;
 
     @Override
     public void verify(Supplier<Authentication> authentication, RequestAuthorizationContext object) {
         AuthorizationDecision decision = check(authentication, object);
-        if (decision == null || !decision.isGranted()) {
+        if (!decision.isGranted()) {
             if (!authentication.get().isAuthenticated()) {
                 throw new AccessDeniedException("Access Denied");
             }
         }
     }
-
-    List <PrivilegeTableEntry> cache = null;
 
     @Override
     public AuthorizationDecision check(Supplier<Authentication> authentication, RequestAuthorizationContext object) {
@@ -42,18 +42,14 @@ public final class RedfishAuthorizationManager implements AuthorizationManager<R
         String method = object.getRequest().getMethod();
         String uri = object.getRequest().getRequestURI();
 
-        if (cache==null) {
-            cache = privilegeTableRepository.findAll();
-        }
-
         // DEBUG: temporary for testing only
         if (uri.contains("IIoTNodes")) {
             return new AuthorizationDecision(true);
         }
-        for (PrivilegeTableEntry entry: cache) {
-            if (!entry.isMatchingUrl(uri)) continue;
-            if (entry.isAuthorized(method, authorities)) return new AuthorizationDecision(true);
-        }
+        PrivilegeTableEntry entry = privilegeTableService.getPrivilegeTableEntryFromUri(uri);
+        if ((entry != null) && (entry.isAuthorized(method, authorities)))
+            return new AuthorizationDecision(true);
+
         return new AuthorizationDecision(false);
     }
 
@@ -61,5 +57,4 @@ public final class RedfishAuthorizationManager implements AuthorizationManager<R
     public RedfishAuthorizationManager redfishAuthorizationManagerBean() throws Exception {
         return new RedfishAuthorizationManager();
     }
-
 }

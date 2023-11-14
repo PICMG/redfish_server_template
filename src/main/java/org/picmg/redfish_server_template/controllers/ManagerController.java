@@ -48,6 +48,7 @@ public class ManagerController {
     @Autowired
     ManagerService managerService;
 
+    /* handled by generic Redfish Object handlers
     @GetMapping("/redfish/v1/Managers")
     public ResponseEntity<?> getManagerCollection(){
         String uri = "/redfish/v1/Managers";
@@ -69,7 +70,9 @@ public class ManagerController {
         return ResponseEntity.ok(managerCollectionList);
 
     }
+*/
 
+    /* handled by generic Redfish Object handlers
     @GetMapping("/redfish/v1/Managers/{managerObjectId}")
     public ResponseEntity<?> getManager(@PathVariable String managerObjectId, @RequestHeader String authorization) throws Exception {
         String token = authorization.substring(7);
@@ -91,7 +94,9 @@ public class ManagerController {
         }
         return ResponseEntity.ok(manager);
     }
+*/
 
+/* handled by generic Redfish Object handlers
     @GetMapping("/redfish/v1/Managers/{managerObjectId}/NetworkProtocol")
     public ResponseEntity<?> getManagerNetworkProtocol(@PathVariable String managerObjectId, @RequestHeader String authorization) throws Exception {
         String token = authorization.substring(7);
@@ -113,7 +118,9 @@ public class ManagerController {
         }
         return ResponseEntity.ok(managerNetworkProtocol);
     }
+ */
 
+/* handled by generic Redfish Object handlers
     @GetMapping("/redfish/v1/Managers/{managerObjectId}/NetworkProtocol/HTTPS/Certificates")
     public ResponseEntity<?> getCertificateCollection(@PathVariable String managerObjectId, @RequestHeader String authorization) throws Exception {
         String token = authorization.substring(7);
@@ -135,7 +142,8 @@ public class ManagerController {
         }
         return ResponseEntity.ok(certificateCollectionList);
     }
-
+ */
+    /* handled by generic Redfish Object handlers
     @GetMapping("/redfish/v1/Managers/{managerObjectId}/NetworkProtocol/HTTPS/Certificates/{certificateObjectId}")
     public ResponseEntity<?> getCertificate(@PathVariable String managerObjectId, @PathVariable String certificateObjectId, @RequestHeader String authorization) throws Exception {
         String token = authorization.substring(7);
@@ -157,7 +165,8 @@ public class ManagerController {
         }
         return ResponseEntity.ok(certificate);
     }
-
+*/
+    /* handled by generic Redfish Object handlers
     @GetMapping("/redfish/v1/Managers/{managerObjectId}/EthernetInterfaces")
     public ResponseEntity<?> getEthernetInterfaceCollection(@PathVariable String managerObjectId, @RequestHeader String authorization) throws Exception {
         String token = authorization.substring(7);
@@ -179,7 +188,8 @@ public class ManagerController {
         }
         return ResponseEntity.ok(ethernetInterfaceCollection);
     }
-
+*/
+    /* handled by generic Redfish Object handlers
     @GetMapping("/redfish/v1/Managers/{managerObjectId}/EthernetInterfaces/{ethernetInterfaceObjectId}")
     public ResponseEntity<?> getEthernetInterface(@PathVariable String managerObjectId, @PathVariable String ethernetInterfaceObjectId, @RequestHeader String authorization) throws Exception {
         String token = authorization.substring(7);
@@ -201,7 +211,8 @@ public class ManagerController {
         }
         return ResponseEntity.ok(ethernetInterface);
     }
-
+*/
+    /* handled by generic Redfish Object handlers
     @GetMapping("/redfish/v1/Managers/{managerObjectId}/DedicatedNetworkPorts")
     public ResponseEntity<?> getPortCollection(@PathVariable String managerObjectId, @RequestHeader String authorization) throws Exception {
         String token = authorization.substring(7);
@@ -223,7 +234,8 @@ public class ManagerController {
         }
         return ResponseEntity.ok(portCollection);
     }
-
+*/
+    /* handled by generic Redfish Object handlers
     @GetMapping("/redfish/v1/Managers/{managerObjectId}/DedicatedNetworkPorts/{portObjectId}")
     public ResponseEntity<?> getPort(@PathVariable String managerObjectId, @PathVariable String portObjectId, @RequestHeader String authorization) throws Exception {
         String token = authorization.substring(7);
@@ -245,7 +257,8 @@ public class ManagerController {
         }
         return ResponseEntity.ok(port);
     }
-
+*/
+    /* handled by generic Redfish Object handlers
     @GetMapping("/redfish/v1/Managers/{managerObjectId}/HostInterfaces")
     public ResponseEntity<?> getHostInterfaceCollection(@PathVariable String managerObjectId, @RequestHeader String authorization) throws Exception {
         String token = authorization.substring(7);
@@ -267,7 +280,8 @@ public class ManagerController {
         }
         return ResponseEntity.ok(hostInterfaceCollection);
     }
-
+*/
+    /* handled by generic Redfish Object handlers
     @GetMapping("/redfish/v1/Managers/{managerObjectId}/HostInterfaces/{hostInterfaceObjectId}")
     public ResponseEntity<?> getHostInterface(@PathVariable String managerObjectId, @PathVariable String hostInterfaceObjectId, @RequestHeader String authorization) throws Exception {
         String token = authorization.substring(7);
@@ -290,6 +304,8 @@ public class ManagerController {
         return ResponseEntity.ok(hostInterface);
     }
 
+*/
+    /* handled by generic Redfish Object handlers
     @GetMapping("/redfish/v1/Managers/{managerObjectId}/SerialInterfaces")
     public ResponseEntity<?> getSerialInterfaceCollection(@PathVariable String managerObjectId, @RequestHeader String authorization) throws Exception {
         String token = authorization.substring(7);
@@ -312,6 +328,8 @@ public class ManagerController {
         return ResponseEntity.ok(serialInterfaceCollection);
     }
 
+*/
+    /* handled by generic Redfish Object handlers
     @GetMapping("/redfish/v1/Managers/{managerObjectId}/SerialInterfaces/{serialInterfaceObjectId}")
     public ResponseEntity<?> getSerialInterface(@PathVariable String managerObjectId, @PathVariable String serialInterfaceObjectId, @RequestHeader String authorization) throws Exception {
         String token = authorization.substring(7);
@@ -334,6 +352,8 @@ public class ManagerController {
         return ResponseEntity.ok(serialInterface);
     }
 
+*/
+    /* handled by generic Redfish Object handlers
     @GetMapping("/redfish/v1/Managers/{managerObjectId}/LogServices")
     public ResponseEntity<?> getLogServicesCollection(@PathVariable String managerObjectId, @RequestHeader String authorization) throws Exception {
         String token = authorization.substring(7);
@@ -356,6 +376,8 @@ public class ManagerController {
         return ResponseEntity.ok(logServiceCollection);
     }
 
+*/
+    /* handled by generic Redfish Object handlers
     @GetMapping("/redfish/v1/Managers/{managerObjectId}/LogServices/Log")
     public ResponseEntity<?> getLogService(@PathVariable String managerObjectId, @RequestHeader String authorization) throws Exception {
         String token = authorization.substring(7);
@@ -378,6 +400,8 @@ public class ManagerController {
         return ResponseEntity.ok(logService);
     }
 
+*/
+    /* handled by generic Redfish Object handlers
     @GetMapping("/redfish/v1/Managers/{managerObjectId}/SecurityPolicy")
     public ResponseEntity<?> getSecurityPolicy(@PathVariable String managerObjectId, @RequestHeader String authorization) throws Exception{
         String token = authorization.substring(7);
@@ -400,6 +424,8 @@ public class ManagerController {
         return ResponseEntity.ok(securityPolicyList);
     }
 
+*/
+    /* handled by generic Redfish Object handlers
     @GetMapping("/redfish/v1/Managers/{managerObjectId}/SecurityPolicy/SPDM/{certType}")
     public ResponseEntity<?> getManagerCertificateCollection(@PathVariable String managerObjectId, @PathVariable String certType, @RequestHeader String authorization) throws Exception{
         String token = authorization.substring(7);
@@ -422,6 +448,8 @@ public class ManagerController {
         return ResponseEntity.ok(certificateCollectionList);
     }
 
+*/
+    /* handled by generic Redfish Object handlers
     @GetMapping("/redfish/v1/Managers/{managerObjectId}/SecurityPolicy/SPDM/{certType}/{cert}")
     public ResponseEntity<?> getManagerCertificate(@PathVariable String managerObjectId, @PathVariable String certType, @PathVariable String cert, @RequestHeader String authorization) throws Exception{
         String token = authorization.substring(7);
@@ -444,6 +472,8 @@ public class ManagerController {
         return ResponseEntity.ok(certificate);
     }
 
+*/
+    /* handled by generic Redfish Object handlers
     @GetMapping("/redfish/v1/Managers/{managerObjectId}/SecurityPolicy/TLS/{obj1}/{certType}")
     public ResponseEntity<?> getManagerCertificateCollection(@PathVariable String managerObjectId, @PathVariable String obj1, @PathVariable String certType, @RequestHeader String authorization) throws Exception{
         String token = authorization.substring(7);
@@ -466,6 +496,8 @@ public class ManagerController {
         return ResponseEntity.ok(certificateCollectionList);
     }
 
+*/
+    /* handled by generic Redfish Object handlers
     @GetMapping("/redfish/v1/Managers/{managerObjectId}/SecurityPolicy/TLS/{obj1}/{certType}/{cert}")
     public ResponseEntity<?> getManagerCertificate(@PathVariable String managerObjectId, @PathVariable String obj1, @PathVariable String certType, @PathVariable String cert, @RequestHeader String authorization) throws Exception{
         String token = authorization.substring(7);
@@ -487,5 +519,5 @@ public class ManagerController {
         }
         return ResponseEntity.ok(certificate);
     }
-
+*/
 }

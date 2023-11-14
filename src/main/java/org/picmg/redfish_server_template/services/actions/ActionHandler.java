@@ -23,20 +23,15 @@
 package org.picmg.redfish_server_template.services.actions;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import org.picmg.redfish_server_template.RFmodels.AllModels.ActionInfo_Parameters;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
+import org.picmg.redfish_server_template.RFmodels.custom.RedfishObject;
 
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeoutException;
 
 public interface ActionHandler {
 
     Future<Boolean> execute(OffsetDateTime startTime, Integer taskId) throws Exception;
-    List<String> validateRequestBody(String requestBody, List<ActionInfo_Parameters> actionInfoParameters);
+    List<String> validateRequestBody(String requestBody, List<RedfishObject> actionInfoParameters);
     void setRequestBody(String requestBody) throws JsonProcessingException;
 }

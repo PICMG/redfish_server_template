@@ -22,7 +22,9 @@
 
 package org.picmg.redfish_server_template.services;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.picmg.redfish_server_template.RFmodels.AllModels.*;
+import org.picmg.redfish_server_template.RFmodels.custom.RedfishObject;
 import org.picmg.redfish_server_template.repository.MessageRegistryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -30,6 +32,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.TreeMap;
 
 @Service
 public class RedfishErrorResponseService {
@@ -38,11 +41,11 @@ public class RedfishErrorResponseService {
     MessageRegistryRepository messageRegistryRepository;
 
     List<MessageRegistry_MessageRegistry> messageRegistryList = null;
-
-    /***
-     *
-     * PasswordChangeRequired
-     */
+/*
+    //
+    //
+    //PasswordChangeRequired
+    //
     public RedfishError getPasswordChangeRequiredResponse() {
         if(messageRegistryList==null) {
             messageRegistryList = messageRegistryRepository.findAll();
@@ -606,6 +609,7 @@ public class RedfishErrorResponseService {
         }
         return redfishError;
     }
+*/
 
     public RedfishError getErrorMessage(String registryPrefix, String messageName, List<String> messageArgs, List<String> relatedProperties) {
         // populate the messageRegistry cache.
@@ -638,15 +642,15 @@ public class RedfishErrorResponseService {
 
                 // populate the extended message information from the
                 // registry information.
-                List<Message_Message> messageExtendedInfoList = new ArrayList<>();
-                Message_Message messageExtendedInfo = new Message_Message();
-                messageExtendedInfo.setSeverity(messageRegistryMessage.get("Severity"));
-                messageExtendedInfo.setMessageSeverity(ResourceHealth.fromValue(messageRegistryMessage.get("MessageSeverity")));
-                messageExtendedInfo.setResolution(messageRegistryMessage.get("Resolution"));
-                messageExtendedInfo.setMessageId(messageRegistry.getId()+"."+messageName);
-                messageExtendedInfo.setMessage(message);
-                messageExtendedInfo.setMessageArgs(messageArgs);
-                messageExtendedInfo.setRelatedProperties(relatedProperties);
+                List<Object> messageExtendedInfoList = new ArrayList<>();
+                TreeMap<String, Object> messageExtendedInfo = new TreeMap<>();
+                messageExtendedInfo.put("Severity",messageRegistryMessage.get("Severity"));
+                messageExtendedInfo.put("MessageSeverity",ResourceHealth.fromValue(messageRegistryMessage.get("MessageSeverity")).toString());
+                messageExtendedInfo.put("Resolution",messageRegistryMessage.get("Resolution"));
+                messageExtendedInfo.put("MessageId", messageRegistry.getId()+"."+messageName);
+                messageExtendedInfo.put("Message", message);
+                messageExtendedInfo.put("MessageArgs", messageArgs);
+                messageExtendedInfo.put("RelatedProperties",relatedProperties);
                 messageExtendedInfoList.add(messageExtendedInfo);
                 redfishErrorError.setAtMessageExtendedInfo(messageExtendedInfoList);
                 redfishError.setError(redfishErrorError);
@@ -654,5 +658,4 @@ public class RedfishErrorResponseService {
         }
         return redfishError;
     }
-
 }

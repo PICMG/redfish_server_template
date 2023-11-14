@@ -23,11 +23,6 @@
 package org.picmg.redfish_server_template.services;
 
 import org.picmg.redfish_server_template.RFmodels.AllModels.*;
-import org.picmg.redfish_server_template.repository.chassis.CertificateCollectionRepository;
-import org.picmg.redfish_server_template.repository.chassis.CertificateRepository;
-import org.picmg.redfish_server_template.repository.chassis.EnvironmentMetricsRepository;
-import org.picmg.redfish_server_template.repository.managers.*;
-import org.picmg.redfish_server_template.repository.systems.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
@@ -42,7 +37,7 @@ import java.util.concurrent.Future;
 
 @Service
 public class SystemsService {
-
+/*
     @Value("${async.task.wait-time}")
     long taskWaitTime;
 
@@ -550,5 +545,5 @@ public class SystemsService {
     public Task_Task getTaskResource(String Id) {
         return taskService.getTask(Id);
     }
-
+*/
 }

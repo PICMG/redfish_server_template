@@ -47,7 +47,7 @@ public class SystemsController {
     long taskWaitTime;
     @Autowired
     SystemsService systemsService;
-
+/*
     @GetMapping("/redfish/v1/Systems")
     public ResponseEntity<?> getComputerSystemCollection(){
         String uri = "/redfish/v1/Systems";
@@ -74,7 +74,6 @@ public class SystemsController {
     @GetMapping("/redfish/v1/Systems/{systemObjectId}")
     public ResponseEntity<?> getComputerSystem(@PathVariable String systemObjectId, @RequestHeader String authorization) throws Exception {
         String uri = "/redfish/v1/Systems/"+systemObjectId;
-        Integer newTaskId = systemsService.getTaskId();
         OffsetDateTime startTime = OffsetDateTime.now();
         ComputerSystem_ComputerSystem computerSystem_computerSystem = null;
         try {
@@ -658,5 +657,5 @@ public class SystemsController {
         }
         return ResponseEntity.ok(certificate);
     }
-
+*/
 }
