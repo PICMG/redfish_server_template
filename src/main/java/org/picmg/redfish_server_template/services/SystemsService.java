@@ -22,18 +22,7 @@
 
 package org.picmg.redfish_server_template.services;
 
-import org.picmg.redfish_server_template.RFmodels.AllModels.*;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.scheduling.annotation.AsyncResult;
 import org.springframework.stereotype.Service;
-
-import java.time.OffsetDateTime;
-import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.Future;
 
 @Service
 public class SystemsService {

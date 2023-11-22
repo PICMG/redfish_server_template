@@ -22,32 +22,12 @@
 
 package org.picmg.redfish_server_template.services;
 
-import org.picmg.redfish_server_template.RFmodels.AllModels.Task_TaskState;
 import org.picmg.redfish_server_template.RFmodels.custom.PrivilegeTableEntry;
-import org.picmg.redfish_server_template.RFmodels.custom.RedfishObject;
-import org.picmg.redfish_server_template.repository.AccountService.RedfishAuthorizationManager;
 import org.picmg.redfish_server_template.repository.PrivilegeTableRepository;
-import org.picmg.redfish_server_template.repository.RedfishObjectRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
-import org.springframework.data.crossstore.ChangeSetPersister;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.scheduling.annotation.AsyncResult;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.authorization.AuthorizationDecision;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.web.access.intercept.RequestAuthorizationContext;
 import org.springframework.stereotype.Service;
 
-import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.Future;
-import java.util.function.Supplier;
 
 @Service
 public class PrivilegeTableService {
