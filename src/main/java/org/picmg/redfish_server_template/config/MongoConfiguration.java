@@ -50,17 +50,6 @@ public class MongoConfiguration {
     @Autowired
     private MongoMappingContext mongoMappingContext;
 
-
-    /*
-    @Autowired
-    private ReactiveMongoDatabaseFactory reactiveDbFactory;
-
-    @Bean
-    @Primary
-    public ReactiveMongoTemplate reactiveMongoTemplate() {
-        return new ReactiveMongoTemplate(reactiveDbFactory, mongoMappingConverter());
-    }
-*/
     @Bean
     @Primary
     public MappingMongoConverter mongoMappingConverter() {
