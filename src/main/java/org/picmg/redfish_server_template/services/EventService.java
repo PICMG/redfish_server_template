@@ -22,36 +22,22 @@
 
 package org.picmg.redfish_server_template.services;
 
-import org.picmg.redfish_server_template.RFmodels.AllModels.*;
-import org.picmg.redfish_server_template.RFmodels.custom.EventMessage;
-import org.picmg.redfish_server_template.RFmodels.custom.Events;
-import org.picmg.redfish_server_template.repository.EventService.EventDestinationCollectionRepository;
-import org.picmg.redfish_server_template.repository.EventService.EventDestinationRepository;
-import org.picmg.redfish_server_template.repository.EventService.EventRepository;
-import org.picmg.redfish_server_template.repository.EventService.EventServiceRepository;
-import org.picmg.redfish_server_template.utils.Utils;
 import org.json.JSONObject;
-import org.openapitools.jackson.nullable.JsonNullable;
+import org.picmg.redfish_server_template.RFmodels.custom.EventMessage;
+import org.picmg.redfish_server_template.RFmodels.custom.RedfishObject;
+import org.picmg.redfish_server_template.repository.RedfishObjectRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.scheduling.annotation.AsyncResult;
 import org.springframework.stereotype.Service;
-import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
 import javax.mail.*;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
-import javax.naming.LimitExceededException;
-import javax.persistence.EntityExistsException;
 import java.io.IOException;
-import java.time.OffsetDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 @Service
 public class EventService {
@@ -66,16 +52,7 @@ public class EventService {
     long taskWaitTime;
 
     @Autowired
-    EventRepository eventRepository;
-
-    @Autowired
-    EventServiceRepository eventServiceRepository;
-
-    @Autowired
-    EventDestinationRepository eventDestinationRepository;
-
-    @Autowired
-    EventDestinationCollectionRepository eventDestinationCollectionRepository;
+    RedfishObjectRepository objectRepository;
 
     @Autowired
     APIServices apiServices;
@@ -85,24 +62,7 @@ public class EventService {
 
     public List<SseEmitter> emitterList = new CopyOnWriteArrayList<>();
 
-    @Async
-    public Future<List<EventDestinationCollection>> getAllEventDetails(OffsetDateTime startTime, Integer taskId) {
-        List<EventDestinationCollection> eventDestinationCollectionList = eventDestinationCollectionRepository.findAll();
-        if(startTime.getSecond() > taskWaitTime+1) {
-            taskService.updateTaskState(taskId.toString(), Task_TaskState.COMPLETED, eventDestinationCollectionList);
-        }
-        return new AsyncResult<List<EventDestinationCollection>>(eventDestinationCollectionList);
-    }
-
-    @Async
-    public Future<EventDestination_EventDestination> getSubscriptionById(OffsetDateTime startTime, Integer taskId, String Id) {
-        EventDestination_EventDestination eventDestination = eventRepository.getById(Id);
-        if(startTime.getSecond() > taskWaitTime+1) {
-            taskService.updateTaskState(taskId.toString(), Task_TaskState.COMPLETED, eventDestination);
-        }
-        return new AsyncResult<EventDestination_EventDestination>(eventDestination);
-    }
-
+    /* TODO work on this later
     @Async
     public Future<EventDestination_EventDestination> addSubscription(Boolean isaAync, OffsetDateTime startTime, Integer taskId, EventDestination_EventDestination event) {
         EventDestination_EventDestination newSubscription = eventRepository.getEventByName(event.getName());
@@ -207,13 +167,6 @@ public class EventService {
         return true;
     }
 
-    public List<EventService_EventService> getEventServices() {
-        return eventServiceRepository.findAll();
-    }
-
-    public EventDestination_EventDestination getByEventName(String eventName) {
-        return eventRepository.getEventByName(eventName);
-    }
 
     public SseEmitter setEmitterList() throws Exception {
         Future<EventDestination_EventDestination> resp = addSubscription(false, null, null, createSubscription());
@@ -250,8 +203,8 @@ public class EventService {
         if(event != null)
             deleteSubscription(event.getId());
     }
-
-    public void disPatchEvents(Events events) {
+*/
+    public void disPatchEvents(RedfishObject events) {
         for ( SseEmitter emitter : emitterList){
             try {
                 emitter.send(SseEmitter.event().name("Event").data(events));
@@ -262,7 +215,7 @@ public class EventService {
         }
     }
 
-    public void disPatchMetricReport(MetricReport_MetricReport metricReport) {
+    public void disPatchMetricReport(RedfishObject metricReport) {
         for ( SseEmitter emitter : emitterList){
             try {
                 emitter.send(SseEmitter.event().name("Metric Report").data(metricReport));
@@ -272,7 +225,8 @@ public class EventService {
         }
     }
 
-    public boolean getAllEventAlertDetails(Events events,  String authorization) throws IOException, LimitExceededException {
+    /* TODO work on this later
+    public boolean getAllEventAlertDetails(RedfishObject events,  String authorization) throws IOException, LimitExceededException {
         JSONObject jsonObject = new JSONObject(events);
         if(!Utils.isSizeILimit(jsonObject, Utils.BYTES_IN_MB)) {
             throw new LimitExceededException();
@@ -309,6 +263,8 @@ public class EventService {
         return true;
     }
 
+ */
+
     public void implementSMTP(String destination, EventMessage eventMessage) {
         String username = this.smtpUsername;
         String password = this.smtpPassword;
@@ -344,23 +300,5 @@ public class EventService {
 
     public void implementRedfishProtocol(String destination, EventMessage message, String authorization) throws IOException {
         String respString = apiServices.callGETAPI(destination, authorization);
-//        String respString = apiServices.callPOSTAPI(destination, message.toString(), authorization);
-        // DEBUG: System.out.println(respString);
-    }
-
-    public void createTaskForOperation(OffsetDateTime startTime, Integer newTaskId, String uri) {
-        taskService.createTaskForAsyncOperation(startTime, newTaskId, uri);
-    }
-
-    public Integer getTaskId() {
-        return taskService.getMaxTaskCount();
-    }
-
-    public String getTaskServiceURI(String newTaskId) {
-        return taskService.getTaskServiceURI() + newTaskId + "/monitor";
-    }
-
-    public Task_Task getTaskResource(String Id) {
-        return taskService.getTask(Id);
     }
 }

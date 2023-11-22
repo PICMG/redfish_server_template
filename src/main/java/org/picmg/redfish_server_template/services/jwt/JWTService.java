@@ -22,9 +22,6 @@
 
 package org.picmg.redfish_server_template.services.jwt;
 
-import org.picmg.redfish_server_template.RFmodels.AllModels.SessionService_SessionService;
-import org.picmg.redfish_server_template.RFmodels.AllModels.Session_Session;
-import org.picmg.redfish_server_template.RFmodels.AllModels.ManagerAccount_ManagerAccount;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.apache.tomcat.util.codec.binary.Base64;
@@ -46,14 +43,17 @@ import java.util.Map;
 import java.util.function.Function;
 
 import org.openapitools.jackson.nullable.JsonNullable;
+import org.picmg.redfish_server_template.RFmodels.custom.RedfishObject;
+import org.picmg.redfish_server_template.repository.RedfishObjectRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 @Service
 public class JWTService {
 
     @Autowired
-    org.picmg.redfish_server_template.services.SessionService sessionService;
+    RedfishObjectRepository objectRepository;
     public static final long JWT_TOKEN_EXPIRY_TIME = 5 * 60 * 60; // in seconds
 
     public String extractJWTUsername(String jwt) throws IOException, NoSuchAlgorithmException {
@@ -68,12 +68,12 @@ public class JWTService {
         Map<String, Object> claims = Jwts.parser().setSigningKey(publicKey).parseClaimsJws(jwt).getBody();
         return claims;
     }
-    public String generateToken(ManagerAccount_ManagerAccount account, String sessionId) throws IOException, NoSuchAlgorithmException {
+    public String generateToken(RedfishObject account, String sessionId) throws IOException, NoSuchAlgorithmException {
         Map<String, Object> claims = new HashMap<>();
-        claims.put("scope","Redfish.Role." + account.getRoleId());
+        claims.put("scope","Redfish.Role." + account.get("RoleId").toString());
         claims.put("jti","");
         claims.put("SessionId",sessionId);
-        return buildJWT(claims, account.getUserName());
+        return buildJWT(claims, account.get("UserName").toString());
     }
 
     private String buildJWT(Map<String, Object> claims, String subject) throws IOException, NoSuchAlgorithmException {
@@ -141,19 +141,30 @@ public class JWTService {
     public Boolean isTokenValid(String token) throws IOException, NoSuchAlgorithmException {
         try{
             final Map<String, Object> claims = extractJWTClaims(token);
-            Session_Session session = sessionService.getSessionById((String) claims.get("SessionId"));
-            OffsetDateTime createdAt = session.getCreatedTime().get();
-            List<SessionService_SessionService> sessionService1 = this.sessionService.getSessionService();
-            long sessionTimeOut = sessionService1.get(0).getSessionTimeout();
-            LocalDateTime dateTime = createdAt.toLocalDateTime();
-            if (LocalDateTime.now().isAfter(dateTime.plusMinutes(sessionTimeOut))){
-                sessionService.deleteMemberFromSessionCollection(session.getId());
-                sessionService.deleteSession(session.getId());
+            RedfishObject session =
+                    objectRepository.findFirstWithQuery(
+                            Criteria.where("_odata_type").is("SessionService")
+                                    .and("Id").is(claims.get("SessionId")));
+            OffsetDateTime createdAt = OffsetDateTime.parse(session.get("CreatedTime").toString());
 
+            // get the session timeout value from the session service object
+            RedfishObject sessionService1 =
+                    objectRepository.findFirstWithQuery(
+                            Criteria.where("_odata_type").is("SessionService"));
+            long sessionTimeOut = Long.parseLong(sessionService1.get("SessionTimeout").toString());
+
+            // get the current date/time
+            LocalDateTime dateTime = createdAt.toLocalDateTime();
+
+            // if the session time has elapsed, delete the session
+            if (LocalDateTime.now().isAfter(dateTime.plusMinutes(sessionTimeOut))){
+                objectRepository.delete(session);
                 return false;
             }
-            session.setCreatedTime(JsonNullable.of(OffsetDateTime.now()));
-            sessionService.updateSession(session);
+
+            // otherwise, reset the session timer
+            session.put("CreatedTime",JsonNullable.of(OffsetDateTime.now()));
+            objectRepository.save(session);
             return true;
         }
         catch (NullPointerException e){

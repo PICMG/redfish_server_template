@@ -23,18 +23,14 @@
 package org.picmg.redfish_server_template.services.actions;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import org.picmg.redfish_server_template.RFmodels.AllModels.ActionInfo_Parameters;
+import org.picmg.redfish_server_template.RFmodels.custom.RedfishObject;
 import org.picmg.redfish_server_template.services.TaskService;
-import org.picmg.redfish_server_template.utils.Utils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.AsyncResult;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.concurrent.Future;
@@ -66,7 +62,7 @@ public class Bios_ResetActionHandler implements ActionHandler{
     }
 
     @Override
-    public List<String> validateRequestBody(String requestBody, List<ActionInfo_Parameters> actionInfoParameters) {
+    public List<String> validateRequestBody(String requestBody, List<RedfishObject> actionInfoParameters) {
         return null;
     }
 

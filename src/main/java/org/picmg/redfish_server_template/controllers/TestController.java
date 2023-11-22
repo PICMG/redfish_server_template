@@ -21,7 +21,6 @@
 
 package org.picmg.redfish_server_template.controllers;
 
-import org.picmg.redfish_server_template.RFmodels.AllModels.MessageRegistry_MessageRegistry;
 import org.picmg.redfish_server_template.repository.MessageRegistryRepository;
 import org.picmg.redfish_server_template.services.PasswordEncryptorService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,7 +46,6 @@ public class TestController {
 
         return privilegeRegistryService.getAllPrivilegesList();
     }
-*/
 
     @GetMapping("/messageR")
     public List<MessageRegistry_MessageRegistry> getMessageRegistryList() {
@@ -65,4 +63,6 @@ public class TestController {
     public String connectRedfishServiceFromEvents() {
         return "Calling Internal Redfish API from Event for Protocol: Redfish";
     }
+
+ */
 }
