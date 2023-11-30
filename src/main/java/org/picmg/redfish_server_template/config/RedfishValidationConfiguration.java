@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.picmg.redfish_server_template.data_validation.RedfishObjectHandlerMethodArgumentResolver;
 import org.picmg.redfish_server_template.repository.AccountService.RedfishAuthorizationManager;
 import org.picmg.redfish_server_template.repository.CachedSchemaRepository;
+import org.picmg.redfish_server_template.repository.RedfishObjectRepository;
 import org.picmg.redfish_server_template.services.PrivilegeTableService;
 import org.picmg.redfish_server_template.services.RedfishErrorResponseService;
 import org.picmg.redfish_server_template.services.SchemaService;
@@ -30,10 +31,13 @@ class RedfishValidationConfiguration implements WebMvcConfigurer {
     @Autowired
     PrivilegeTableService privilegeTableService;
 
+    @Autowired
+    RedfishObjectRepository objectRepository;
+
     @Override
     public void addArgumentResolvers(List<HandlerMethodArgumentResolver> resolvers) {
         // add our resolver to the list of existing resolvers
-        resolvers.add(new RedfishObjectHandlerMethodArgumentResolver(objectMapper, privilegeTableService, redfishErrorResponseService, schemaService));
+        resolvers.add(new RedfishObjectHandlerMethodArgumentResolver(objectMapper, privilegeTableService, redfishErrorResponseService, schemaService, objectRepository));
     }
 }
 

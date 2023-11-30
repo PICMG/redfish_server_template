@@ -319,6 +319,8 @@ public class SchemaService {
         String newFragment = newRef.split("#")[1];
         if (newUrl.contains("/")) newUrl = newUrl.substring(newUrl.lastIndexOf("/")+1);
         if (newUrl.isEmpty()) newUrl = schemaFile;
-        return isSchemaFieldWriteOnly(newUrl+"#"+newFragment,fieldName.substring(field.length()+1));
+        if (field.length()>fieldName.length())
+            return isSchemaFieldWriteOnly(newUrl+"#"+newFragment,fieldName.substring(field.length()+1));
+        return isSchemaFieldWriteOnly(newUrl+"#"+newFragment,fieldName);
     }
 }

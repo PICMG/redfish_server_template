@@ -43,10 +43,10 @@ public final class RedfishAuthorizationManager implements AuthorizationManager<R
         String uri = object.getRequest().getRequestURI();
 
         // DEBUG: temporary for testing only
-        if (uri.contains("IIoTNodes")) {
+        if (uri.contains("IIoT")) {
             return new AuthorizationDecision(true);
         }
-        if (uri.contains("/Actions")&&(method.equals("POST"))) {
+        if (uri.contains("/Actions/")&&(method.equals("POST"))) {
             // if the uri is for an action, and the request is for a post, use the privileges for the
             // base object
             PrivilegeTableEntry entry = privilegeTableService.getPrivilegeTableEntryFromUri(uri.substring(0,uri.indexOf("/Actions/")-1));

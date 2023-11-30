@@ -52,66 +52,6 @@ public class RootService {
     @Autowired
     RedfishObjectRepository objectRepository;
 
-/*
-    @PostConstruct
-    public void abortAllPreviouslyRunningOperations() {
-        abortAllPreviouslyRunningTasks();
-        clearAllPreviousSessions();
-    }
-
-    public void clearAllPreviousSessions() {
-        // DEBUG: System.out.println("Clearing all Previous Sessions....");
-        List<RedfishCollection> sessionsList = collectionRepository.findAllByType("SessionCollection");
-        if(sessionsList.size()==0)return;
-        for (Session_Session session: sessionsList) {
-            deleteMemberFromSessionCollection(session.getId());
-            deleteSession(session.getId());
-        }
-
-    }
-
-    public boolean deleteMemberFromSessionCollection(String id){
-        Session_Session session = sessionRepository.findByID(id);
-        String member = session.getAtOdataId();
-        SessionCollection sessionCollection = sessionCollectionRepository.findByName("Session Collection");
-        List<Odata_IdRef> members = sessionCollection.getMembers();
-        Odata_IdRef idRef = new Odata_IdRef();
-        idRef.atOdataId(member);
-        members.remove(idRef);
-        sessionCollection.setMembers(members);
-        sessionCollection.setMembersAtOdataCount(sessionCollection.getMembersAtOdataCount() - 1);
-        sessionCollectionRepository.save(sessionCollection);
-        return true;
-
-    }
-
-    public Session_Session deleteSession(String id) {
-        Session_Session session = sessionRepository.deleteByID(id);
-        return session;
-    }
-
-    public void abortAllPreviouslyRunningTasks() {
-        // DEBUG: System.out.println("Aborting all Previous Running Tasks....");
-        List<Task_Task> taskList = taskRepository.findAll();
-        for(Task_Task task: taskList) {
-            if(task.getTaskState().toString().equalsIgnoreCase(String.valueOf(Task_TaskState.RUNNING))) {
-                task.setTaskState(Task_TaskState.SUSPENDED);
-                if(task.getTaskMonitor()!=null && task.getTaskMonitor().getTaskState().equalsIgnoreCase(String.valueOf(Task_TaskState.RUNNING)))
-                    task.getTaskMonitor().setTaskState(String.valueOf(Task_TaskState.SUSPENDED));
-            }
-        }
-        taskRepository.saveAll(taskList);
-    }
-
-    @Async
-    public Future<List<ServiceRoot_ServiceRoot>> getRootData(OffsetDateTime startTime, Integer taskId) throws Exception {
-        List<ServiceRoot_ServiceRoot> rootList = rootServiceRepository.findAll();
-        if( ChronoUnit.SECONDS.between(startTime, OffsetDateTime.now())  > taskWaitTime+1) {
-            taskService.updateTaskState(taskId.toString(), Task_TaskState.COMPLETED, rootList);
-        }
-        return new AsyncResult<List<ServiceRoot_ServiceRoot>>(rootList);
-    }
-*/
     public List<MetadataFile> getMetadataEntity() throws Exception {
         List<MetadataFile> list = metadataFileRepository.findAll();
         return list;
@@ -121,21 +61,4 @@ public class RootService {
         List<OdataFile> list = odataFileRepository.findAll();
         return list;
     }
-/*
-    public void createTaskForOperation(OffsetDateTime startTime, Integer newTaskId, String uri) {
-        taskService.createTaskForAsyncOperation(startTime, newTaskId, uri);
-    }
-
-    public Integer getTaskId() {
-        return taskService.getMaxTaskCount();
-    }
-
-    public String getTaskServiceURI(String newTaskId) {
-        return taskService.getTaskServiceURI() + newTaskId + "/monitor";
-    }
-
-    public RedfishObject getTaskResource(String Id) {
-        return taskService.getTask(Id);
-    }
-*/
 }

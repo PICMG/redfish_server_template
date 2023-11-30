@@ -37,8 +37,8 @@ import java.util.List;
 import java.util.Map;
 
 
-@RestController
-@RequestMapping("/redfish/v1/TaskService")
+//@RestController
+//@RequestMapping(value = "/redfish/v1/TaskService")
 public class TaskController extends RedfishObjectController {
 
     String controllerEntityName = "TaskService";

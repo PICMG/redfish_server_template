@@ -42,10 +42,10 @@ import javax.naming.LimitExceededException;
 import java.io.IOException;
 
 
-@Configuration
-@EnableWebMvc
-@RestController
-@RequestMapping("/redfish/v1/EventService")
+//@Configuration
+//@EnableWebMvc
+//@RestController
+//@RequestMapping("/redfish/v1/EventService")
 public class EventController {
 
     @Value("${async.task.retry-time}")

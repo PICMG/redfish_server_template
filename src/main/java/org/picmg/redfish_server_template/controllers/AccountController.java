@@ -41,9 +41,7 @@ import java.util.*;
 
 
 @RestController
-@RequestMapping({
-        "/redfish/v1/AccountService"
-})
+@RequestMapping(value = {"/redfish/v1/AccountService"})
 public class AccountController extends RedfishObjectController {
     @Autowired
     PasswordEncryptorService passwordEncryptorService;
@@ -152,7 +150,7 @@ public class AccountController extends RedfishObjectController {
     }
 
     @Override
-    @PostMapping({"/Accounts","/Accounts/Members"})
+    @PostMapping(value = {"/Accounts","/Accounts/Members"})
     public ResponseEntity<?> post(@ValidRedfishObject RedfishObject obj, HttpServletRequest request) {
         return super.post(obj, request);
     }

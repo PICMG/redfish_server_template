@@ -630,10 +630,17 @@ public class RedfishErrorResponseService {
 
                 // fill in the fields in the message with the error info given
                 for (int i=0;i<messageArgs.size();i++) {
-                    if (message.contains("%"+Integer.toString(i+1)+" ")) {
+                    if (message.contains(" %"+Integer.toString(i+1))) {
                         message = message.replace(
-                                "%"+Integer.toString(i+1)+" ",
-                                messageArgs.get(i)+" ");
+                                " %"+Integer.toString(i+1),
+                                " "+messageArgs.get(i));
+                    }
+                }
+                for (int i=0;i<messageArgs.size();i++) {
+                    if (message.contains("'%"+Integer.toString(i+1))) {
+                        message = message.replace(
+                                "'%"+Integer.toString(i+1),
+                                "'"+messageArgs.get(i));
                     }
                 }
                 redfishErrorError.setMessage(message);

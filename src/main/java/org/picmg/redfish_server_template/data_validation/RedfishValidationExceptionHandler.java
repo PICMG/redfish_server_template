@@ -23,6 +23,14 @@ public class RedfishValidationExceptionHandler {
         List<RedfishError> messages = exception.getErrorMessages();
         TreeMap<String,Object> errors = new TreeMap<>();
         RedfishError result;
+        if (messages == null) {
+            result = redfishErrorResponseService.getErrorMessage(
+                    "Base",
+                    "GeneralError",
+                    new ArrayList<String>(), new ArrayList<String>());
+            result.getError().getAtMessageExtendedInfo().clear();
+            return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).body(result);
+        }
         if (messages.size()>1) {
             result = redfishErrorResponseService.getErrorMessage(
                     "Base",

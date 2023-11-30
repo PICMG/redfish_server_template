@@ -21,27 +21,24 @@
 
 package org.picmg.redfish_server_template.controllers;
 
+import org.picmg.redfish_server_template.RFmodels.custom.CachedSchema;
 import org.picmg.redfish_server_template.RFmodels.custom.RedfishObject;
-import org.picmg.redfish_server_template.dto.SessionLoginDTO;
+import org.picmg.redfish_server_template.services.AccountService;
 import org.picmg.redfish_server_template.services.RedfishErrorResponseService;
 import org.picmg.redfish_server_template.services.jwt.JWTService;
 import org.picmg.redfish_server_template.services.SessionService;
-import org.hibernate.UnknownProfileException;
 import org.openapitools.jackson.nullable.JsonNullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
-import java.io.IOException;
-import java.security.NoSuchAlgorithmException;
+import javax.servlet.http.HttpServletRequest;
 import java.time.OffsetDateTime;
-import java.util.UUID;
+
 
 @RestController
+@RequestMapping(value = "/redfish/v1/SessionService/Sessions")
 public class SessionController extends RedfishObjectController {
     @Autowired
     SessionService sessionService;
@@ -54,85 +51,71 @@ public class SessionController extends RedfishObjectController {
     @Autowired
     RedfishErrorResponseService errorResponseService;
 
-    @RequestMapping(value = "/redfish/v1/SessionService/Sessions", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> sessionPost(@RequestBody SessionLoginDTO account) throws IOException, NoSuchAlgorithmException {
-        RedfishObject user = sessionService.validateUser(account.getUserName());
-        try {
-            if (user == null){
-                return ResponseEntity.badRequest().body("Username or Password is Incorrect");
+    @Autowired
+    AccountService accountService;
+
+    // onPostCompleteMissingFields()
+    //
+    // This method is called during an HTTP post request after initial payload has been validated against the schema.
+    // It can be assumed that the payload has all required fields for onCreate, but other required fields may be missing.
+    // This method completes field data for any required fields and the updated redfish object is returned.
+    //
+    // The default behavior of this function is to complete the @odata.id, id, and Name fields.  @odata.type has
+    // already been completed. Objects that extend this class should update any other required fields.
+    //
+    // parameters:
+    //    RedfishObject obj -- the object to be posted
+    //    HttpServletRequest request -- the post request that was received
+    //    CachedSchema schema -- the related schema object for the posted data
+    //
+    // returns:
+    //    RedfishObject with updated fields
+    //
+    protected RedfishObject onPostCompleteMissingFields(RedfishObject obj, HttpServletRequest request, CachedSchema schema) {
+        RedfishObject session = super.onPostCompleteMissingFields(obj,request,schema);
+        session.setName(obj.getString("UserName") + " Session");
+        session.setDescription("User Session for " + obj.getString("UserName"));
+        session.put("UserName",obj.getString("UserName"));
+        session.put("Password",obj.getString("Password"));
+        session.put("CreatedTime",JsonNullable.of(OffsetDateTime.now()));
+
+        return session;
+    }
+
+    // onPostCreationChecks()
+    //
+    // This method checks the validity of the provided data during a POST operation.
+    // It can be assumed that the payload has all required fields populated.
+    // This method checks field values against service requirements to make sure the object is valid.
+    //
+    // The default behavior of this is to return null (no error). Objects that extend this class should
+    // override this behavior to meet the needs of their specific object type.
+    //
+    // parameters:
+    //    RedfishObject obj -- the object to be posted
+    //    HttpServletRequest request -- the post request that was received
+    //    CachedSchema schema -- the related schema object for the posted data
+    //
+    // returns:
+    //    RedfishError if errors are found, otherwise null
+    //
+    @Override
+    protected ResponseEntity<?> onPostUpdateResponse(RedfishObject obj, HttpServletRequest request, ResponseEntity<?> response) {
+        // get the related account
+        RedfishObject account = accountService.getAccountFromUserName(obj.getString("UserName"));
+        if (account!=null) {
+            String jwt = null;
+            try {
+                jwt = jwtService.generateToken(account, obj.getId());
+                HttpHeaders respHeaders = new HttpHeaders();
+                respHeaders.addAll(response.getHeaders());
+                respHeaders.add("X-Auth-Token", jwt);
+                return ResponseEntity.status(response.getStatusCode())
+                        .headers(respHeaders).body(response.getBody());
+            } catch (Exception ignored) {
             }
-            if (user.get("Password").toString().compareTo(account.getPassword()) != 0){
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Username or Password is Incorrect");
-            }
-            authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(account.getUserName(), account.getPassword())
-            );
-            RedfishObject session = new RedfishObject();
-            session.setId(UUID.randomUUID().toString());
-            session.setName("User Session");
-            session.setDescription("Manager User Session");
-            session.put("UserName",user.get("UserName"));
-            session.setAtOdataId("/redfish/v1/SessionService/Sessions/" + session.getId());
-            session.setAtOdataType("Session_Session");
-            session.put("CreatedTime",JsonNullable.of(OffsetDateTime.now()));
-            sessionService.addSession(session);
-            String jwt = jwtService.generateToken(user, session.getId());
-            HttpHeaders headers = new HttpHeaders();
-            headers.add(HttpHeaders.LOCATION, session.getAtOdataId());
-            headers.set("X-Auth-Token", jwt);
-            return ResponseEntity.ok().headers(headers).body(session);
-
-        } catch (UnknownProfileException unknownProfileException) {
-            ResponseEntity.badRequest().body(unknownProfileException.getMessage());
         }
-        catch (Exception exception){
-            return ResponseEntity.badRequest().body(exception.getMessage());
-        }
-        return ResponseEntity.badRequest().body("");
+        return response;
     }
 
-    /* TODO: add back later?
-    @RequestMapping(value="/Sessions", method=RequestMethod.PATCH, consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> updateSession(@RequestBody Session_Session session, @RequestHeader(value="Authorization", required=false) String authorization) throws Exception {
-        if(session.getId() == null)
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Request could not be processed because it contains invalid information");
-
-
-        if(sessionService.updateSession(session))
-            return ResponseEntity.ok(errorResponseService.getSuccessResponse());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Request could not be processed because it contains invalid information");
-    }
-*/
-    /* TODO: add back later?
-    @RequestMapping(value="", method=RequestMethod.PATCH, consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> updateSessionService(@RequestBody SessionService_SessionService sessionService1, @RequestHeader(value="Authorization", required=false) String authorization) throws Exception {
-        if(sessionService1 == null)
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Request could not be processed because it contains invalid information");
-
-        return ResponseEntity.ok(sessionService.updateSessionService(sessionService1));
-    }
-
-    @RequestMapping(value = "/Sessions/{id}", method = RequestMethod.DELETE)
-    public ResponseEntity<?> deleteSession(@RequestHeader(value="Authorization", required=false) String authorization, @PathVariable("id") String id) throws Exception {
-        if(id == null)
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("ID cannot be null");
-        sessionService.deleteMemberFromSessionCollection(id);
-        Session_Session deletedSession = sessionService.deleteSession(id);
-
-        if(deletedSession != null)
-            return ResponseEntity.ok(deletedSession);
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Session not found");
-    }
-    @RequestMapping(value="/Sessions", method=RequestMethod.GET)
-    public ResponseEntity<?> getSessionCollection(@RequestHeader(value="Authorization", required=false) String authorization) throws Exception {
-        return ResponseEntity.ok().body(sessionService.getSessionCollection());
-    }
-
-    @RequestMapping(value="", method=RequestMethod.GET)
-    public ResponseEntity<?> getSessionService(@RequestHeader(value="Authorization", required=false) String authorization) throws Exception {
-        return ResponseEntity.ok().body(sessionService.getSessionService());
-
-    }
-
-     */
 }

@@ -29,13 +29,14 @@ import org.picmg.redfish_server_template.repository.RedfishObjectRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+
 import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.Future;
+
 
 @Service
 public class TaskService {
@@ -137,7 +138,7 @@ public class TaskService {
                 redfishErrorResponseService.getErrorMessage(
                         "TaskEvent",
                         "TaskCompletedOK",
-                        new ArrayList<>(Arrays.asList(existingTask.getId())),
+                        new ArrayList<>(Collections.singletonList(existingTask.getId())),
                         new ArrayList<>()
                 ));
             objectRepository.save(taskMonitor);
@@ -147,7 +148,7 @@ public class TaskService {
         return true;
     }
 
-    public RedfishObject createTaskForAsyncOperation(OffsetDateTime startTime) {
+       public RedfishObject createTaskForAsyncOperation(OffsetDateTime startTime, Future<ResponseEntity<?>> future) {
         // create a new task
         RedfishObject newTask = new RedfishObject();
         String taskId = UUID.randomUUID().toString();
@@ -170,7 +171,7 @@ public class TaskService {
                 redfishErrorResponseService.getErrorMessage(
                         "TaskEvent",
                         "TaskCompletedOK",
-                        new ArrayList<>(Arrays.asList(taskId)),
+                        new ArrayList<>(Collections.singletonList(taskId)),
                         new ArrayList<>()
                 ));
         newTask.put("TaskMonitor",taskMonitorUri);

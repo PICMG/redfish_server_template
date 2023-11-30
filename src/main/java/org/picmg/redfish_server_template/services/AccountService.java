@@ -172,12 +172,10 @@ public class AccountService {
         return result;
     }
 
-    /* TODO: add back in if required
-    public List<AccountService_AccountService> getAccountServiceListData() {
-        List<AccountService_AccountService> accountServiceV1110AccountServiceList = accountServiceRepository.findAll();
-        return accountServiceV1110AccountServiceList;
+
+    public RedfishObject getAccountFromUserName(String userName) {
+        return objectRepository.findFirstWithQuery(Criteria.where("_odata_type").is("ManagerAccount").and("UserName").is(userName));
     }
-    */
 
     /* TODO: add back in if required
     @Async
