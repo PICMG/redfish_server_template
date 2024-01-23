@@ -22,18 +22,26 @@
 
 package org.picmg.redfish_server_template.services;
 
-import org.picmg.redfish_server_template.RFmodels.AllModels.ActionInfo_ActionInfo;
-import org.picmg.redfish_server_template.repository.ActionInfoRepository;
+import org.picmg.redfish_server_template.RFmodels.custom.RedfishObject;
+import org.picmg.redfish_server_template.repository.RedfishObjectRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public class ActionInfoService {
 
     @Autowired
-    ActionInfoRepository actionInfoRepository;
+    RedfishObjectRepository objectRepository;
 
-    public ActionInfo_ActionInfo getActionInfoById(String id) {
-        return actionInfoRepository.findByID(id);
+    public RedfishObject getActionInfoById(String id) {
+
+        List<RedfishObject> objList = objectRepository.findWithQuery(
+                Criteria.where("_odata_type").is("ActionInfo")
+                        .and("UserName").is(id));
+        if (objList.size()!=1) return null;
+        return objList.get(0);
     }
 }

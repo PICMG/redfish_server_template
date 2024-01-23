@@ -21,23 +21,13 @@
 
 package org.picmg.redfish_server_template.controllers;
 
-import org.picmg.redfish_server_template.RFmodels.AllModels.*;
 import org.picmg.redfish_server_template.services.SystemsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
-@RestController
-@RequestMapping("")
+//@RestController
+//@RequestMapping("")
 public class SystemsController {
 
     @Value("${async.task.retry-time}")
@@ -47,7 +37,7 @@ public class SystemsController {
     long taskWaitTime;
     @Autowired
     SystemsService systemsService;
-
+/*
     @GetMapping("/redfish/v1/Systems")
     public ResponseEntity<?> getComputerSystemCollection(){
         String uri = "/redfish/v1/Systems";
@@ -74,7 +64,6 @@ public class SystemsController {
     @GetMapping("/redfish/v1/Systems/{systemObjectId}")
     public ResponseEntity<?> getComputerSystem(@PathVariable String systemObjectId, @RequestHeader String authorization) throws Exception {
         String uri = "/redfish/v1/Systems/"+systemObjectId;
-        Integer newTaskId = systemsService.getTaskId();
         OffsetDateTime startTime = OffsetDateTime.now();
         ComputerSystem_ComputerSystem computerSystem_computerSystem = null;
         try {
@@ -658,5 +647,5 @@ public class SystemsController {
         }
         return ResponseEntity.ok(certificate);
     }
-
+*/
 }

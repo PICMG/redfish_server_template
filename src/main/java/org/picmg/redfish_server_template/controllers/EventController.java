@@ -23,11 +23,7 @@ package org.picmg.redfish_server_template.controllers;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.picmg.redfish_server_template.RFmodels.AllModels.MetricReport_MetricReport;
-import org.picmg.redfish_server_template.RFmodels.AllModels.EventDestinationCollection;
-import org.picmg.redfish_server_template.RFmodels.AllModels.EventDestination_EventDestination;
-import org.picmg.redfish_server_template.RFmodels.AllModels.EventService_EventService;
-import org.picmg.redfish_server_template.RFmodels.custom.Events;
+import org.picmg.redfish_server_template.RFmodels.custom.RedfishObject;
 import org.picmg.redfish_server_template.services.EventService;
 import org.picmg.redfish_server_template.services.QueryParameterService;
 import org.picmg.redfish_server_template.services.RedfishErrorResponseService;
@@ -43,19 +39,13 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import javax.naming.LimitExceededException;
-import javax.persistence.EntityExistsException;
 import java.io.IOException;
-import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 
-@Configuration
-@EnableWebMvc
-@RestController
-@RequestMapping("/redfish/v1/EventService")
+//@Configuration
+//@EnableWebMvc
+//@RestController
+//@RequestMapping("/redfish/v1/EventService")
 public class EventController {
 
     @Value("${async.task.retry-time}")
@@ -75,14 +65,16 @@ public class EventController {
     @Autowired
     RedfishErrorResponseService redfishErrorResponseService;
 
-    private MetricReport_MetricReport metricReport;
+    private RedfishObject metricReport;
 
+/*    @GetMapping("/Subscriptions") - handled by RedfishCollection controller
     @GetMapping("")
     public List<EventService_EventService> getEventServices() {
         return eventService.getEventServices();
     }
+*/
 
-    @GetMapping("/Subscriptions")
+/*    @GetMapping("/Subscriptions") - handled by RedfishCollection controller
     public ResponseEntity<?> getAllSubscriptions(@RequestHeader String authorization) {
         String uri = "/redfish/v1/EventService/Subscriptions";
         Integer newTaskId = eventService.getTaskId();
@@ -102,6 +94,10 @@ public class EventController {
         }
         return ResponseEntity.status(HttpStatus.OK).body(eventDestinationCollectionList);
     }
+
+ */
+
+    /* handled by RedfishObject controller
     @GetMapping("/Subscriptions/{ID}")
     @ResponseBody
     public ResponseEntity<?> getSubscriptionById(@PathVariable String ID, @RequestHeader String authorization) {
@@ -125,7 +121,8 @@ public class EventController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Subscription with ID "+ID+" does not exist.");
         return ResponseEntity.ok(event);
     }
-
+*/
+    /* Handled by RedfishCollection controller
     @RequestMapping(value = "/Subscriptions", method= RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> addSubscription(@RequestBody EventDestination_EventDestination events, @RequestHeader String authorization){
         String uri = "/redfish/v1/EventService/Subscriptions";
@@ -153,7 +150,9 @@ public class EventController {
         }
         return ResponseEntity.status(HttpStatus.CREATED).headers(headers).body(addEvent);
     }
+*/
 
+    /* handled by RedfishObject controller
     @RequestMapping(value="/Subscriptions/{ID}", method=RequestMethod.DELETE)
     public ResponseEntity<?> deleteSubscription(@PathVariable String ID, @RequestHeader String authorization) {
         String uri = "/redfish/v1/EventService/Subscriptions/"+ID;
@@ -177,7 +176,9 @@ public class EventController {
             return ResponseEntity.ok(redfishErrorResponseService.getSubscriptionTerminationResponse(ID));
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body("");
     }
+*/
 
+    /* TODO: Evaluate this later
     @CrossOrigin
     @RequestMapping(value = "/SSE", method = RequestMethod.GET, consumes = MediaType.ALL_VALUE)
     public SseEmitter subscribe() {
@@ -191,7 +192,7 @@ public class EventController {
 
     @CrossOrigin
     @PostMapping(value = "/dispatch/Event")
-    public void dispatchEventToClients(@RequestBody Events events) {
+    public void dispatchEventToClients(@RequestBody RedfishObject events) {
         eventService.disPatchEvents(events);
     }
 
@@ -202,7 +203,7 @@ public class EventController {
     }
 
     @RequestMapping(value = "/PushEvents", method= RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<String> addEventAlert(@RequestBody Events events, @RequestHeader String authorization) throws IOException {
+    public ResponseEntity<String> addEventAlert(@RequestBody RedfishObject events, @RequestHeader String authorization) throws IOException {
 
         HttpHeaders headers = new HttpHeaders();
         headers.add(HttpHeaders.LOCATION, "/redfish/v1/EventService/");
@@ -221,12 +222,12 @@ public class EventController {
             ObjectMapper mapper = new ObjectMapper();
             mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
             mapper.registerModule(new JsonNullableModule());
-            this.metricReport = mapper.readValue(metricReportString, MetricReport_MetricReport.class);
+            this.metricReport = mapper.readValue(metricReportString, RedfishObject.class);
             eventService.disPatchMetricReport(this.metricReport);
         }
         catch(Exception e){
             e.printStackTrace();
         }
     }
-
+    */
 }

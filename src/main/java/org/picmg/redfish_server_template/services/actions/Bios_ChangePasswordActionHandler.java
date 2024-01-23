@@ -23,30 +23,20 @@
 package org.picmg.redfish_server_template.services.actions;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.picmg.redfish_server_template.RFmodels.AllModels.ActionInfo_Parameters;
-import org.picmg.redfish_server_template.RFmodels.AllModels.Bios_ChangePasswordRequestBody;
-import org.picmg.redfish_server_template.services.ActionInfoService;
+import org.picmg.redfish_server_template.RFmodels.custom.RedfishObject;
 import org.picmg.redfish_server_template.services.TaskService;
-import org.picmg.redfish_server_template.utils.Utils;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
-import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.AsyncResult;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
-import javax.validation.Valid;
-import java.io.IOException;
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
@@ -68,10 +58,10 @@ public class Bios_ChangePasswordActionHandler implements ActionHandler {
 
     public void setRequestBody(String requestBody) throws JsonProcessingException {
         ObjectMapper mapper = new ObjectMapper();
-        this.requestBody = mapper.readValue(requestBody, Bios_ChangePasswordRequestBody.class);
+        this.requestBody = mapper.readValue(requestBody, JsonNode.class);
     }
 
-    private Bios_ChangePasswordRequestBody requestBody;
+    private JsonNode requestBody;
 
 
     @Override
@@ -90,7 +80,7 @@ public class Bios_ChangePasswordActionHandler implements ActionHandler {
     }
 
     @Override
-    public List<String> validateRequestBody(String requestBody, List<ActionInfo_Parameters> actionInfoParameters) {
+    public List<String> validateRequestBody(String requestBody, List<RedfishObject> actionInfoParameters) {
         JSONObject requestBodyMap = new JSONObject(requestBody);
         List<String> errors = new ArrayList<>();
         for (String key:requestBodyMap.keySet()) {
@@ -99,23 +89,26 @@ public class Bios_ChangePasswordActionHandler implements ActionHandler {
             }
         }
 
-        for (ActionInfo_Parameters parameter: actionInfoParameters) {
-            if ((parameter.getRequired()) && !requestBodyMap.has(parameter.getName())){
+        for (RedfishObject parameter: actionInfoParameters) {
+            if (parameter.containsKey("Required") && !requestBodyMap.has(parameter.getName())){
                 errors.add("ActionParameterMissing_" + parameter.getName());
             }
             if(requestBodyMap.has(parameter.getName())){
                 Object obj = requestBodyMap.get(parameter.getName()).getClass();
                 String[] dt = obj.toString().split("\\.");
                 String dataType = dt[dt.length - 1];
-                String parameterType = parameter.getDataType().getValue();
+                String parameterType = parameter.get("DataType").toString();
                 if (!dataType.equalsIgnoreCase(parameterType)){
                     errors.add("IncorrectParameterType_"+ parameter.getName() + "_" + requestBodyMap.get(parameter.getName()));
                 }
-                if (parameter.getAllowableValues() != null && parameter.getAllowableValues().size()>0){
-                    if (!parameter.getAllowableValues().contains(requestBodyMap.get(parameter.getName()))){
+                /* TODO - Fix later
+                if (parameter.containsKey("AllowableValues") && parameter.get("AllowableValues").size()>0){
+                    if (!parameter.get("AllowableValues").contains(requestBodyMap.get(parameter.getName()))){
                         errors.add("IncorrectParameterValue_"+ parameter.getName() + "_" + requestBodyMap.get(parameter.getName()));
                     }
                 }
+
+                 */
             }
 
         }

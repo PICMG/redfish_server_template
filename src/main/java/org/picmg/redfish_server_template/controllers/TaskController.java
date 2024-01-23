@@ -22,8 +22,6 @@
 
 package org.picmg.redfish_server_template.controllers;
 
-import org.picmg.redfish_server_template.RFmodels.AllModels.Task_Task;
-import org.picmg.redfish_server_template.RFmodels.custom.TaskMonitor;
 import org.picmg.redfish_server_template.services.QueryParameterService;
 import org.picmg.redfish_server_template.services.TaskService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,9 +37,9 @@ import java.util.List;
 import java.util.Map;
 
 
-@RestController
-@RequestMapping("/redfish/v1/TaskService")
-public class TaskController {
+//@RestController
+//@RequestMapping(value = "/redfish/v1/TaskService")
+public class TaskController extends RedfishObjectController {
 
     String controllerEntityName = "TaskService";
     @Autowired
@@ -49,7 +47,7 @@ public class TaskController {
 
     @Autowired
     QueryParameterService queryParameterService;
-
+/*
     @GetMapping("/Tasks")
     public ResponseEntity<?> getAll(@RequestHeader String authorization, @RequestParam Map<String, String> params) throws Exception {
         if(params.isEmpty())
@@ -116,4 +114,6 @@ public class TaskController {
             return ResponseEntity.ok("The request completed successfully");
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Request could not be processed because it contains invalid information");
     }
+
+ */
 }

@@ -33,7 +33,6 @@ public class PasswordEncryptorService {
         int strength = 10; // work factor of bcrypt
         BCryptPasswordEncoder bCryptPasswordEncoder =
                 new BCryptPasswordEncoder(strength, new SecureRandom());
-        String encodedPassword = bCryptPasswordEncoder.encode(plainPassword);
-        return encodedPassword;
+        return bCryptPasswordEncoder.encode(plainPassword);
     }
 }
