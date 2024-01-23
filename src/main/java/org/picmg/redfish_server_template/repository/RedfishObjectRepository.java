@@ -21,6 +21,20 @@ public class RedfishObjectRepository {
     MongoTemplate mongoTemplate;
 
     public void save(RedfishObject obj ) {
+        if (!obj.containsKey("@odata.id")) {
+            return;
+        }
+        if (!obj.containsKey("@odata.type")) {
+            return;
+        }
+        if (!obj.containsKey("_odata_id")) obj.put("_odata_id",obj.getString("@odata.id"));
+        if (!obj.containsKey("_odata_type")) {
+            String type = obj.getString("@odata.type");
+            if (type.contains(".")) {
+                type = type.substring(type.lastIndexOf(".")+1);
+            }
+            obj.put("_odata_type",type);
+        }
         mongoTemplate.save(obj,"RedfishObject");
     }
 
@@ -42,6 +56,22 @@ public class RedfishObjectRepository {
             if (doc.containsKey("Members@odata.count")) {
                 RedfishCollection obj = new RedfishCollection();
                 obj.putAll(doc);
+                // attempt to add members and update the member id
+                if ((obj.containsKey("_odata_id")) && (obj.containsKey("_odata_type"))) {
+                    // get the type of object
+                    String type = obj.getString("_odata_type");
+                    if (type.contains(".")) type = type.substring(type.lastIndexOf(".")+1);
+                    type = type.replace("Collection","");
+
+                    // get a list of all objects that are of the same type as this collection
+                    List<RedfishObject> members = findWithQuery(Criteria.where("_odata_type").is(type)
+                            .and("_odata_id").regex("^"+obj.getString("_odata_id")+"/[^/]+$"));
+                    List<Document> membersDoc = new ArrayList<>();
+                    for (RedfishObject member: members) {
+                        membersDoc.add(Document.parse("{\"@odata.id\":\""+member.getAtOdataId()+"\"}"));
+                    }
+                    obj.setMembers(membersDoc);
+                }
                 result.add(obj);
             } else {
                 RedfishObject obj = new RedfishObject();
@@ -59,6 +89,22 @@ public class RedfishObjectRepository {
         if (obj.containsKey("Members@odata.count")) {
             RedfishCollection result = new RedfishCollection();
             result.putAll(obj);
+            if ((result.containsKey("_odata_id")) && (result.containsKey("_odata_type"))) {
+                // get the type of object
+                String type = result.getString("_odata_type");
+                if (type.contains(".")) type = type.substring(type.lastIndexOf(".")+1);
+                type = type.replace("Collection","");
+
+                // get a list of all objects that are of the same type as this collection
+                List<RedfishObject> members = findWithQuery(Criteria.where("_odata_type").is(type)
+                        .and("_odata_id").regex("^"+obj.getString("_odata_id")+"/[^/]+$"));
+                List<Document> membersDoc = new ArrayList<>();
+                for (RedfishObject member: members) {
+                    membersDoc.add(Document.parse("{\"@odata.id\":\""+member.getAtOdataId()+"\"}"));
+                }
+                result.setMembers(membersDoc);
+            }
+
             return result;
         }
         RedfishObject result = new RedfishObject();

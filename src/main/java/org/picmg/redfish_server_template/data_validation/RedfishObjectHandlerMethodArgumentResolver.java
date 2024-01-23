@@ -915,37 +915,9 @@ public class RedfishObjectHandlerMethodArgumentResolver implements HandlerMethod
         }
     }
 
-    // This function verifies an action's parameters based on the contents of an ActionItem resource
-    // For this service, the only parameters that are allowed are those specified explicitly in the
-    // resource.  Additional parameters will be identified as errors.
-    //
-    // returns a list of RedifishErrors if there are problems found with the payload.
-    // if no issues are found, the list will be empty.
-    private List<RedfishError> evaluateActionParamsWithActionInfo(String actionName, JsonNode jsonNode, String actionInfoUri) throws Exception {
-        List<RedfishError> results = new ArrayList<>();
+    public List<RedfishError> evauateActionParametersAgainstActionInfoParameters(String actionName, JsonNode jsonNode, ArrayList<Document> actionInfoParameters) {
+        ArrayList<RedfishError> results = new ArrayList<>();
 
-        // attempt to get the ActionInfo from the database
-        RedfishObject actionInfoObject = objectRepository.findFirstWithQuery(Criteria.where("_odata_id").is(actionInfoUri));
-        if (actionInfoObject == null) {
-            results.add(redfishErrorResponseService.getErrorMessage(
-                    "Base",
-                    "InvalidUri",
-                    new ArrayList<>(Collections.singletonList(actionInfoUri)),
-                    new ArrayList<>()));
-            return results;
-        }
-
-        // find the parameters key with in the actionInfo resource
-        if (!actionInfoObject.containsKey("Parameters") || !(actionInfoObject.get("Parameters") instanceof ArrayList)) {
-            results.add(redfishErrorResponseService.getErrorMessage(
-                    "Base",
-                    "InternalError",
-                    new ArrayList<>(),
-                    new ArrayList<>()));
-            return results;
-        }
-
-        ArrayList<Document> actionInfoParameters = actionInfoObject.get("Parameters",ArrayList.class);
         for (Document parameterDefinition: actionInfoParameters) {
             if (!parameterDefinition.containsKey("Name")) {
                 // invalid parameter definition - all parameters must have a Name
@@ -994,7 +966,64 @@ public class RedfishObjectHandlerMethodArgumentResolver implements HandlerMethod
                 checkArrayValuesAgainstActionInfo(actionName, givenParam, parameterName, parameterDefinition, results);
             }
         }
+
+        // check for parameters that are provided but are not defined in the ActionInfo resource
+        Iterator<String> it = jsonNode.fieldNames();
+        while (it.hasNext()) {
+            String fieldname = it.next();
+
+            // attempt to find the field name within the ActionInfo
+            boolean found = false;
+            for (Document doc:actionInfoParameters) {
+                if (!doc.containsKey("Name")) continue;
+                if (doc.getString("Name").equals(fieldname)) {
+                    found = true;
+                    break;
+                };
+            }
+            if (!found) {
+                // here if unknown parameter
+                results.add(redfishErrorResponseService.getErrorMessage(
+                        "Base",
+                        "ActionParameterUnknown",
+                        new ArrayList<>(Arrays.asList(actionName, fieldname)),
+                        new ArrayList<>()));
+            }
+        }
         return results;
+    }
+
+    // This function verifies an action's parameters based on the contents of an ActionItem resource
+    // For this service, the only parameters that are allowed are those specified explicitly in the
+    // resource.  Additional parameters will be identified as errors.
+    //
+    // returns a list of RedifishErrors if there are problems found with the payload.
+    // if no issues are found, the list will be empty.
+    private List<RedfishError> evaluateActionParamsWithActionInfo(String actionName, JsonNode jsonNode, String actionInfoUri) throws Exception {
+        List<RedfishError> results = new ArrayList<>();
+
+        // attempt to get the ActionInfo from the database
+        RedfishObject actionInfoObject = objectRepository.findFirstWithQuery(Criteria.where("_odata_id").is(actionInfoUri));
+        if (actionInfoObject == null) {
+            results.add(redfishErrorResponseService.getErrorMessage(
+                    "Base",
+                    "InvalidUri",
+                    new ArrayList<>(Collections.singletonList(actionInfoUri)),
+                    new ArrayList<>()));
+            return results;
+        }
+
+        // find the parameters key with in the actionInfo resource
+        if (!actionInfoObject.containsKey("Parameters") || !(actionInfoObject.get("Parameters") instanceof ArrayList)) {
+            results.add(redfishErrorResponseService.getErrorMessage(
+                    "Base",
+                    "InternalError",
+                    new ArrayList<>(),
+                    new ArrayList<>()));
+            return results;
+        }
+        ArrayList<Document> actionInfoParameters = actionInfoObject.get("Parameters", ArrayList.class);
+        return evauateActionParametersAgainstActionInfoParameters(actionName, jsonNode, actionInfoParameters);
     }
 
     // This function verifies an action's parameters based on the older mechanism of specifying

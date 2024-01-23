@@ -24,9 +24,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
 import java.time.OffsetDateTime;
 import java.util.*;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 
 import static java.lang.Thread.sleep;
 
@@ -37,6 +35,7 @@ import static java.lang.Thread.sleep;
 @RestController
 @RequestMapping(value = {"/redfish/v1/**"})
 public class RedfishObjectController {
+    static protected HashMap<String,Future<ResponseEntity<?>>> taskList = new HashMap<>();
     @Autowired
     RedfishObjectRepository objectRepository;
 
@@ -522,11 +521,44 @@ public class RedfishObjectController {
         return response;
     }
 
-    public Future<ResponseEntity<?>> actionAsyncHandler(RedfishObject obj, String uri, HttpServletRequest request) {
-        return new AsyncResult<>(ResponseEntity
+    // actionAsyncHandler
+    // This method is called by the task service to handle the particular action.  Default behavior does nothing.
+    //
+    // obj - the parameters passed to the action from the caller.
+    // uri - the uri of the action call
+    // request - the complete request that invoked the action
+    // taskId - the taskId that will be associated with this action if it is not completed quickly
+    // taskService - the task service that invoked this method call.
+    //
+    // returns - a response to be returned to the calling client
+    public ResponseEntity<?> actionAsyncHandler(RedfishObject obj, String uri, HttpServletRequest request, String taskId, TaskService taskService) {
+        // for testing purposes - wait 10 seconds for completion
+        try {
+            sleep(10000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        return ResponseEntity
                 .status(HttpStatus.ACCEPTED)
                 .contentType(MediaType.APPLICATION_JSON)
-                .body("{}"));
+                .body("{}");
+    }
+
+    // onActionAdditionalParameterChecking()
+    // This method is called after an action's parameters have been checked against the schema (or actionInfo) to
+    // perform any additional checks.  Scenarios when this might be needed are when there are interdependencies between
+    // parameters or between parameters and the configuration of the associated resource.  This method is intended to be
+    // overridden by any object controller classes that need additional parameter checks.  The default behavior is to
+    // do nothing.
+    //
+    // parameters - the parameters passed as part of this action request.
+    // uri - the uri of the action request.
+    // request - the request that was made.
+    //
+    // returns:
+    // a list of redfish errors associated with the parameter checks.  An empty list of no errors are found.
+    protected List<RedfishError> onActionAdditionalParameterChecking(RedfishObject obj, String uri, HttpServletRequest request) {
+        return new ArrayList<RedfishError>();
     }
 
     // postHandleActions()
@@ -535,29 +567,62 @@ public class RedfishObjectController {
     //
     // because events can be long-running, this function creates an async wrapper and handles task creation if the
     // underlying task takes too long to complete.
-    protected ResponseEntity<?> postHandleActions(RedfishObject obj, String uri, HttpServletRequest request) {
-        final long taskWaitTime = 5;  // the maximum amount of seconds to wait for a task to complete
+    protected ResponseEntity<?> postHandleActions(RedfishObject parameters, String uri, HttpServletRequest request) {
+        final long taskWaitTime = 2;  // the maximum amount of seconds to wait for a task to complete
         final long taskRetryTime = 2; // the retry time for the task
+
+        // perform any additional parameter checking for this action
+        List<RedfishError> errors = onActionAdditionalParameterChecking(parameters, uri, request);
+        if (!errors.isEmpty()) {
+            RedfishError errResult = redfishErrorResponseService.getErrorMessage("Base","GeneralError", new ArrayList<>(), new ArrayList<>());
+            errResult.getError().getAtMessageExtendedInfo().clear();
+            for (RedfishError err: errors) {
+                errResult.getError().getAtMessageExtendedInfo().addAll(err.getError().getAtMessageExtendedInfo());
+            }
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(errResult);
+        }
 
         // the start time for the task.
         OffsetDateTime startTime = OffsetDateTime.now();
 
+        // create a task UUID - it might not get used, but we need its ID value before we start
+        String taskID = UUID.randomUUID().toString();
+
+        // Permit either the exception handler or the asynchronous task to access the database, but not both
+        Semaphore dbSemaphore = new Semaphore(1);
+
         // create an asynchronous task instance
-        Future<ResponseEntity<?>> future = actionAsyncHandler(obj, uri, request);
+        CompletableFuture<ResponseEntity<?>> future =
+                taskService.actionAsyncHandler(this, parameters, uri, request, taskID, taskService, dbSemaphore);
+
         try {
             ResponseEntity<?> result = future.get(taskWaitTime, TimeUnit.SECONDS);
 
-            // here when the task completed
+            // here if the task completed before timing out
             return result;
         } catch (TimeoutException e) {
-            HttpHeaders responseHeaders = new HttpHeaders();
-            RedfishObject task = taskService.createTaskForAsyncOperation(startTime, future);
-            responseHeaders.set("Location", task.get("TaskMonitor").toString());
-            responseHeaders.set("Retry-After", taskRetryTime + " seconds");
-            return ResponseEntity.status(HttpStatus.ACCEPTED).headers(responseHeaders).body(task);
+            if (dbSemaphore.tryAcquire()) {
+                // here if the task did not complete during the timeout period - create a task and send the response
+                HttpHeaders responseHeaders = new HttpHeaders();
+                RedfishObject task = taskService.createTaskForAsyncOperation(startTime, taskID);
+                taskList.put("taskId", future);
+                responseHeaders.set("Location", task.get("TaskMonitor").toString());
+                responseHeaders.set("Retry-After", taskRetryTime + " seconds");
+                dbSemaphore.release();
+                return ResponseEntity.status(HttpStatus.ACCEPTED).headers(responseHeaders).body(task);
+            }
+            // Handle the condition where the task completed at the same instant that a timeout happened.
+            // return the result of the task
+            ResponseEntity<?> result = future.getNow(null);
+            while (result !=null) result = future.getNow(null);
+            return result;
         } catch (Exception e)  {
+            // here if the task through an unexpected exception
             return ResponseEntity
-                    .status(HttpStatus.ACCEPTED)
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .contentType(MediaType.APPLICATION_JSON)
                     .body("{}");
         }
@@ -751,6 +816,10 @@ public class RedfishObjectController {
     protected void onDeleteRemoveSubordinates(RedfishObject ignoredObject, HttpServletRequest ignoredRequest) {
     }
 
+    protected boolean isDeleteAllowed(RedfishObject ignoredObject, HttpServletRequest ignoredRequest) {
+        return true;
+    }
+
     @DeleteMapping(value="")
     public ResponseEntity<?> delete(HttpServletRequest request) {
         String uri = request.getRequestURI();
@@ -770,6 +839,16 @@ public class RedfishObjectController {
         if (entity==null) {
             // return 404 error - object not found
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("");
+        }
+
+        if (!isDeleteAllowed(entity, request)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(redfishErrorResponseService.getErrorMessage(
+                            "Base",
+                            "ResourceCannotBeDeleted",
+                            new ArrayList<>(),
+                            new ArrayList<>()));
         }
 
         // attempt to delete any subordinates first
