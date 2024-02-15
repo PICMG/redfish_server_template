@@ -38,6 +38,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 @Service
@@ -73,8 +74,18 @@ public class SessionService implements UserDetailsService {
 
         // check to see if this is a redfish account
         if (accountJson.has("AccountTypes")) {
+            boolean redfishAccount  = false;
             List<String> types = accountJson.findValuesAsText("AccountTypes");
-            if (!types.contains(ManagerAccountAccountTypes.REDFISH.toString())) {
+            if (accountJson.get("AccountTypes").isArray()) {
+                for (JsonNode arrayItem : accountJson.get("AccountTypes")) {
+                    String accountType = arrayItem.asText("unknown");
+                    if (accountType.toLowerCase().equals("redfish")) {
+                        redfishAccount = true;
+                        break;
+                    }
+                }
+            }
+            if (!redfishAccount) {
                 // account does not support Redfish login
                 throw (new UsernameNotFoundException("Username not found"));
             }

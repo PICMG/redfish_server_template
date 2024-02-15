@@ -11,10 +11,7 @@ import org.springframework.data.mongodb.core.mapping.Field;
 import org.springframework.security.core.GrantedAuthority;
 import springfox.documentation.spring.web.json.Json;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -35,6 +32,33 @@ public class PrivilegeTableEntry {
     @JsonProperty("OperationMap")
     @Field("OperationMap")
     private Map<String, Object> operationMap;
+
+    private static ArrayList<Map<String,ArrayList<String>>> createOperationEntry(String[] privileges) {
+        ArrayList<Map<String,ArrayList<String>>> result = new ArrayList<>();
+        ArrayList<String> values = new ArrayList<>(Arrays.asList(privileges));
+        Map<String,ArrayList<String>> privObj = new HashMap<>();
+        privObj.put("Privilege",values);
+        ArrayList<Map<String,ArrayList<String>>> privList = new ArrayList<>();
+        result.add(privObj);
+        return result;
+    }
+
+    public static PrivilegeTableEntry actionEntry(String uri,String resource, String[] privileges) {
+        PrivilegeTableEntry result = new PrivilegeTableEntry();
+        result._id = new ObjectId();
+        result.uri = uri;
+        result.entity = resource;
+        result.operationMap = new HashMap<>();
+        // for most of the operations, there will be no privileges because actions are only valid for POST
+        String[] noPrivileges = {};
+        result.operationMap.put("GET", createOperationEntry(noPrivileges));
+        result.operationMap.put("HEAD", createOperationEntry(noPrivileges));
+        result.operationMap.put("PATCH", createOperationEntry(noPrivileges));
+        result.operationMap.put("POST", createOperationEntry(privileges));
+        result.operationMap.put("PUT", createOperationEntry(noPrivileges));
+        result.operationMap.put("DELETE", createOperationEntry(noPrivileges));
+        return result;
+    }
 
     public String getUri() {return uri;}
 

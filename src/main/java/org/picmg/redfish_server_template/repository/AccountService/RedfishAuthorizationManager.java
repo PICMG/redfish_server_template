@@ -46,15 +46,14 @@ public final class RedfishAuthorizationManager implements AuthorizationManager<R
         if (uri.contains("IIoT")) {
             return new AuthorizationDecision(true);
         }
+        // first, see if an entry exists for the uri, and use that
+        PrivilegeTableEntry entry = privilegeTableService.getPrivilegeTableEntryFromUri(uri);
+        if ((entry != null) && (entry.isAuthorized(method, authorities)))
+            return new AuthorizationDecision(true);
+
+        // otherwise, if the uri is or an action, try to use the privileges for the base resource
         if (uri.contains("/Actions/")&&(method.equals("POST"))) {
-            // if the uri is for an action, and the request is for a post, use the privileges for the
-            // base object
-            PrivilegeTableEntry entry = privilegeTableService.getPrivilegeTableEntryFromUri(uri.substring(0,uri.indexOf("/Actions/")-1));
-            if ((entry != null) && (entry.isAuthorized(method, authorities)))
-                return new AuthorizationDecision(true);
-        } else {
-            // otherwise, use the privileges for the base object
-            PrivilegeTableEntry entry = privilegeTableService.getPrivilegeTableEntryFromUri(uri);
+            entry = privilegeTableService.getPrivilegeTableEntryFromUri(uri.substring(0,uri.indexOf("/Actions/")-1));
             if ((entry != null) && (entry.isAuthorized(method, authorities)))
                 return new AuthorizationDecision(true);
         }

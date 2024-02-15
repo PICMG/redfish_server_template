@@ -31,10 +31,13 @@ import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.AsyncResult;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Future;
 
@@ -50,9 +53,14 @@ public class AccountService {
     @Autowired
     TaskService taskService;
 
-    @Autowired
-    PasswordEncryptorService passwordEncryptorService;
+    //@Autowired
+    //PasswordEncryptorService passwordEncryptorService;
 
+    @Autowired
+    SchemaService schemaService;
+
+    @Autowired
+    PasswordEncoder passwordEncoder;
 
     /* TODO: add back in if required
     public List<AccountService_ExternalAccountProvider> getAllAccountServiceV1110ExternalAccountProvider() {
@@ -70,6 +78,14 @@ public class AccountService {
         return false;
     }
     */
+
+    @PostConstruct
+    public void configure() throws Exception {
+        // start the account service, adding an admin account if there are no other accounts
+        if (!doAccountsExist()) {
+            addAdministratorAccount("test");
+        }
+    }
 
     @Async
     //  This method assumes that the account parameter holds a valid account Redfish object
@@ -89,7 +105,7 @@ public class AccountService {
             if(!account.getDescription().isEmpty())
                 userAccount.setDescription(account.get("Description").toString());
             if(account.containsKey("Password")) {
-                String encPassword = passwordEncryptorService.encryptPassword(account.get("Password").toString());
+                String encPassword = passwordEncoder.encode(account.get("Password").toString());
                 userAccount.put("Password",encPassword);
             }
             if(account.containsKey("Enabled"))
@@ -110,6 +126,16 @@ public class AccountService {
         return new AsyncResult<Boolean>(true);
     }
 
+    public boolean updatePassword(String userName, String password)  {
+        RedfishObject userAccount = objectRepository.findFirstWithQuery(
+                Criteria.where("_odata_type").is("ManagerAccount")
+                        .and("UserName").is(userName));
+        if (userAccount == null) return false;
+        String encPassword = passwordEncoder.encode(password);
+        userAccount.put("Password",encPassword);
+        return true;
+    }
+
     public Boolean deleteAccount(RedfishObject account) throws ChangeSetPersister.NotFoundException {
         List<RedfishObject> userAccounts = objectRepository.findWithQuery(
                 Criteria.where("_odata_type").is("ManagerAccount")
@@ -123,18 +149,19 @@ public class AccountService {
         return true;
     }
 
-    @Async
-    public Future<Boolean> addAccount(OffsetDateTime startTime, Integer taskId, RedfishObject account) throws Exception {
+    public void addAdministratorAccount(String password) throws Exception {
+        RedfishObject account = new RedfishObject();
         List<RedfishObject> userAccounts = objectRepository.findWithQuery(
                 Criteria.where("_odata_type").is("ManagerAccount")
-                        .and("UserName").is(account.get("UserName").toString()));
+                        .and("UserName").is("Administrator"));
         if (!userAccounts.isEmpty())
-            throw new Exception("UserName " + account.get("UserName") + " Already Exists");
+            throw new Exception("UserName Administrator Already Exists");
 
         List<RedfishObject> listAccount = objectRepository.findWithQuery(
                 Criteria.where("_odata_type").is("ManagerAccount"));
         if(listAccount.isEmpty()) {
             account.setId("1");
+            account.setAtOdataId("/redfish/v1/AccountService/Accounts/1");
         } else {
             long max = 0;
             for(RedfishObject account1 : listAccount){
@@ -143,17 +170,23 @@ public class AccountService {
             max++;
             account.setId(max+"");
             account.setAtOdataId("/redfish/v1/AccountService/Accounts/"+max);
-            if(account.containsKey("Password")) {
-                String encPassword = passwordEncryptorService.encryptPassword(account.get("Password").toString());
-                account.put("Password",encPassword);
-            }
         }
+        String encPassword = passwordEncoder.encode(password);
+        account.put("Password",encPassword);
+        account.put("AccountTypes", Collections.singletonList("Redfish"));
+        // use the most recent version of the schema
+        String schemaVersion = "#"+schemaService.getNewestVersionFromType("ManagerAccount").getSource();
+        schemaVersion = schemaVersion.replace(".json",".ManagerAccount");
+        account.setAtOdataType(schemaVersion);
+        account.put("Name","Administrator Account");
+        account.put("UserName","Administrator");
+        account.put("Enabled",true);
+        account.put("Locked",false);
+        account.put("RoleId","Administrator");
+        account.put("Links", Collections.singletonMap(
+                "Role", Collections.singletonMap(
+                        "@odata.id","/redfish/v1/AccountService/Roles/Administrator")));
         objectRepository.save(account);
-
-        if(startTime.getSecond() > taskWaitTime+1) {
-            taskService.updateTaskState(taskId.toString(), Task_TaskState.COMPLETED, account);
-        }
-        return new AsyncResult<Boolean>(true);
     }
 
     public List<String> getRoles() {
@@ -175,6 +208,10 @@ public class AccountService {
 
     public RedfishObject getAccountFromUserName(String userName) {
         return objectRepository.findFirstWithQuery(Criteria.where("_odata_type").is("ManagerAccount").and("UserName").is(userName));
+    }
+
+    public boolean doAccountsExist() {
+        return !objectRepository.findWithQuery(Criteria.where("_odata_type").is("ManagerAccount")).isEmpty();
     }
 
     /* TODO: add back in if required

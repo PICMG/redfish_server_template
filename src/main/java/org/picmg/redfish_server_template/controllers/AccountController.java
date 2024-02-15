@@ -27,11 +27,11 @@ import org.picmg.redfish_server_template.RFmodels.custom.RedfishObject;
 import org.picmg.redfish_server_template.data_validation.ValidRedfishObject;
 import org.picmg.redfish_server_template.repository.RedfishObjectRepository;
 import org.picmg.redfish_server_template.services.AccountService;
-import org.picmg.redfish_server_template.services.PasswordEncryptorService;
 import org.picmg.redfish_server_template.services.RedfishErrorResponseService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -44,7 +44,7 @@ import java.util.*;
 @RequestMapping(value = {"/redfish/v1/AccountService"})
 public class AccountController extends RedfishObjectController {
     @Autowired
-    PasswordEncryptorService passwordEncryptorService;
+    PasswordEncoder passwordEncoder;
 
     @Autowired
     RedfishObjectRepository objectRepository;
@@ -108,12 +108,20 @@ public class AccountController extends RedfishObjectController {
         RedfishObject result = super.onPostCompleteMissingFields(obj, request, schema);
 
         if(result.containsKey("Password")) {
-            String encPassword = passwordEncryptorService.encryptPassword(result.get("Password").toString());
+            String encPassword = passwordEncoder.encode(result.get("Password").toString());
             result.put("Password",encPassword);
         }
         if (!result.containsKey("AccountTypes")) {
             result.put("AccountTypes", Collections.singletonList("Redfish"));
         }
+        if (!result.containsKey("Enabled")) result.put("Enabled",true);
+        if (!result.containsKey("Locked")) result.put("Locked",false);
+        // TODO: Add link to role?
+
+        // put the actions into the object for password change
+        result.put("Actions",Collections.singletonMap(
+                "#ManagerAccount.ChangePassword",
+                    Collections.singletonMap("target",result.get("@odata.id")+"/Actions/ManagerAccount.ChangePassword")));
         return result;
     }
 

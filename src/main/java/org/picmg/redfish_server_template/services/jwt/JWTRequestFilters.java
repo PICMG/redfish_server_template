@@ -57,6 +57,7 @@ public class JWTRequestFilters extends OncePerRequestFilter {
         String userPassword;
 
         try {
+            // For bearer authentication, get the user name from the token
             if(authHeader != null && authHeader.startsWith("Bearer")) {
                 jwt = authHeader.substring(7);
                 userName = jwtService.extractJWTUsername(jwt);
@@ -65,7 +66,7 @@ public class JWTRequestFilters extends OncePerRequestFilter {
             e.printStackTrace();
         }
 
-        // otherwise, check for Redfish Authentication
+        // If the user name is found, get the user details from the session service
         if(userName!=null && SecurityContextHolder.getContext().getAuthentication()==null) {
             UserDetails userDetails = this.sessionService.loadUserByUsername(userName);
             try {
