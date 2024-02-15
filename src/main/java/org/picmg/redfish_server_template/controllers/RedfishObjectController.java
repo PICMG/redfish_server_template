@@ -718,7 +718,7 @@ public class RedfishObjectController {
                 .body(json);
     }
 
-    // onPatchCreationChecks()
+    // onPatchPreWriteChecks()
     //
     // This method checks the validity of the modified object for a PATCH operation.
     //
@@ -774,7 +774,7 @@ public class RedfishObjectController {
 
         // perform class-specific checks before writing the changes
         List<RedfishError> additionalErrors = onPatchPreWriteChecks(entity, request);
-        if ((additionalErrors != null) && (additionalErrors.isEmpty())) {
+        if ((additionalErrors != null) && (!additionalErrors.isEmpty())) {
             RedfishError errResult = redfishErrorResponseService.getErrorMessage("Base","GeneralError", new ArrayList<>(), new ArrayList<>());
             errResult.getError().getAtMessageExtendedInfo().clear();
             for (RedfishError err: result) {

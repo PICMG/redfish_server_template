@@ -32,6 +32,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -52,7 +53,29 @@ public class AccountController extends RedfishObjectController {
     @Autowired
     RedfishErrorResponseService errorResponseService;
 
-    @Autowired AccountService accountService;
+    @Autowired
+    AccountService accountService;
+
+    // on post and patch operations, check the complexity of the password to make sure it meets system
+    // requirements
+    public boolean isPasswordComplexityOk(String password) {
+        RedfishObject service = objectRepository.findFirstWithQuery(Criteria.where("_odata_type").is("AccountService"));
+        if (service != null) {
+            if (service.containsKey("MinPasswordLength")) {
+                long minLength = service.getInteger("MinPasswordLength");
+                if (password.length() < minLength) {
+                    return false;
+                }
+            }
+            if (service.containsKey("MaxPasswordLength")) {
+                long maxLength = service.getInteger("MaxPasswordLength");
+                if (password.length() > maxLength) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
 
 
     // onPostCheckForExistence()
@@ -79,7 +102,7 @@ public class AccountController extends RedfishObjectController {
                 Criteria.where("_odata_type").is("ManagerAccount")
                         .and("UserName").is(obj.get("UserName").toString()));
         if (!userAccounts.isEmpty()) {
-            return errorResponseService.getErrorMessage("Base","ResourceAlreadyExists",
+            return errorResponseService.getErrorMessage("Base", "ResourceAlreadyExists",
                     Arrays.asList("ManagerAccount", "UserName", obj.get("UserName").toString()),
                     null);
         }
@@ -107,21 +130,21 @@ public class AccountController extends RedfishObjectController {
     protected RedfishObject onPostCompleteMissingFields(RedfishObject obj, HttpServletRequest request, CachedSchema schema) {
         RedfishObject result = super.onPostCompleteMissingFields(obj, request, schema);
 
-        if(result.containsKey("Password")) {
+        if (result.containsKey("Password")) {
             String encPassword = passwordEncoder.encode(result.get("Password").toString());
-            result.put("Password",encPassword);
+            result.put("Password", encPassword);
         }
         if (!result.containsKey("AccountTypes")) {
             result.put("AccountTypes", Collections.singletonList("Redfish"));
         }
-        if (!result.containsKey("Enabled")) result.put("Enabled",true);
-        if (!result.containsKey("Locked")) result.put("Locked",false);
+        if (!result.containsKey("Enabled")) result.put("Enabled", true);
+        if (!result.containsKey("Locked")) result.put("Locked", false);
         // TODO: Add link to role?
 
         // put the actions into the object for password change
-        result.put("Actions",Collections.singletonMap(
+        result.put("Actions", Collections.singletonMap(
                 "#ManagerAccount.ChangePassword",
-                    Collections.singletonMap("target",result.get("@odata.id")+"/Actions/ManagerAccount.ChangePassword")));
+                Collections.singletonMap("target", result.get("@odata.id") + "/Actions/ManagerAccount.ChangePassword")));
         return result;
     }
 
@@ -144,22 +167,65 @@ public class AccountController extends RedfishObjectController {
         // make sure the RoleId is valid - it must exist because it has already been validated against the schema
         String roleId = obj.get("RoleId").toString();
         boolean roleMatched = false;
-        for (String role: accountService.getRoles()) {
+        for (String role : accountService.getRoles()) {
             if (Objects.equals(roleId, role)) {
-                roleMatched=true;
+                roleMatched = true;
                 break;
             }
         }
         if (!roleMatched) {
             return redfishErrorResponseService.getErrorMessage(
-                    "Base","PropertyValueError", Collections.singletonList("RoleId"), new ArrayList<>());
+                    "Base", "PropertyValueError", Collections.singletonList("RoleId"), new ArrayList<>());
+        }
+        // check password complexity based on account service rules
+        if (!obj.containsKey("Password")) {
+            obj.put("Password", "");
+        }
+        if (!isPasswordComplexityOk(obj.get("Password").toString())) {
+            return redfishErrorResponseService.getErrorMessage(
+                    "Base", "PropertyValueIncorrect",
+                    new ArrayList<>(Arrays.asList("Password", obj.get("Password").toString())),
+                    new ArrayList<>());
+        }
+        return null;
+    }
+
+    // onPatchPreWriteChecks()
+    //
+    // This method checks the validity of the modified object for a PATCH operation.
+    //
+    // The default behavior of this is to return null (no error). Objects that extend this class should
+    // override this behavior to meet the needs of their specific object type.
+    //
+    // parameters:
+    //    RedfishObject obj -- the object to be written back
+    //    HttpServletRequest request -- the post request that was received
+    //
+    // returns:
+    //    RedfishError if errors are found, otherwise null
+    //
+    @Override
+    protected List<RedfishError> onPatchPreWriteChecks(RedfishObject obj, HttpServletRequest ignoredRequest) {
+        if ((obj.containsKey("Password")) && (!isPasswordComplexityOk(obj.get("Password").toString()))) {
+            List<RedfishError> errors = new ArrayList<>();
+            errors.add(redfishErrorResponseService.getErrorMessage(
+                    "Base", "PropertyValueIncorrect",
+                    new ArrayList<>(Arrays.asList("Password", obj.get("Password").toString())),
+                    new ArrayList<>()));
+            return errors;
         }
         return null;
     }
 
     @Override
-    @PostMapping(value = {"/Accounts","/Accounts/Members"})
+    @PostMapping(value = {"/Accounts", "/Accounts/Members"})
     public ResponseEntity<?> post(@ValidRedfishObject RedfishObject obj, HttpServletRequest request) {
         return super.post(obj, request);
+    }
+
+    @Override
+    @PatchMapping(value = {"/Accounts/*"})
+    public ResponseEntity<?> patch(@ValidRedfishObject RedfishObject obj, HttpServletRequest request) {
+        return super.patch(obj, request);
     }
 }
