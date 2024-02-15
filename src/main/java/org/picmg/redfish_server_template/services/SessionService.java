@@ -37,6 +37,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+
+import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -54,6 +56,15 @@ public class SessionService implements UserDetailsService {
         return objectRepository.findWithQuery(
                 Criteria.where("_odata_type").is("ManagerAccount")
                         .and("UserName").is(UserName)).get(0);
+    }
+
+    @PostConstruct
+    private void clearSessionsOnRestart() {
+        RedfishObject session = objectRepository.findFirstWithQuery(Criteria.where("_odata_type").is("Session"));
+        while (session!=null) {
+            objectRepository.delete(session);
+            session = objectRepository.findFirstWithQuery(Criteria.where("_odata_type").is("Session"));
+        }
     }
 
     @Override

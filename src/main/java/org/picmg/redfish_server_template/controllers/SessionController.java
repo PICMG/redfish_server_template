@@ -76,8 +76,9 @@ public class SessionController extends RedfishObjectController {
         session.setName(obj.getString("UserName") + " Session");
         session.setDescription("User Session for " + obj.getString("UserName"));
         session.put("UserName",obj.getString("UserName"));
-        session.put("Password",obj.getString("Password"));
-        session.put("CreatedTime",JsonNullable.of(OffsetDateTime.now()));
+        // don't store the password field - although it is required on create, we don't need to store it.
+        session.remove("Password");
+        session.put("CreatedTime",OffsetDateTime.now().toString());
 
         return session;
     }

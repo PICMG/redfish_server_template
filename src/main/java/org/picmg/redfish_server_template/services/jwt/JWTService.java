@@ -36,6 +36,7 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -135,6 +136,7 @@ public class JWTService {
 
     public Boolean validateToken(String token, UserDetails userDetails) throws Exception{
         final String username = extractJWTUsername(token);
+        if (!isTokenValid(token)) return false;
         return (username.equals(userDetails.getUsername()));
     }
 
@@ -143,9 +145,10 @@ public class JWTService {
             final Map<String, Object> claims = extractJWTClaims(token);
             RedfishObject session =
                     objectRepository.findFirstWithQuery(
-                            Criteria.where("_odata_type").is("SessionService")
+                            Criteria.where("_odata_type").is("Session")
                                     .and("Id").is(claims.get("SessionId")));
-            OffsetDateTime createdAt = OffsetDateTime.parse(session.get("CreatedTime").toString());
+            DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
+            OffsetDateTime createdAt = OffsetDateTime.parse(session.get("CreatedTime").toString(),dateTimeFormatter);
 
             // get the session timeout value from the session service object
             RedfishObject sessionService1 =
@@ -162,8 +165,9 @@ public class JWTService {
                 return false;
             }
 
-            // otherwise, reset the session timer
-            session.put("CreatedTime",JsonNullable.of(OffsetDateTime.now()));
+            // TODO: this is not quite right
+            //  There should be a "last used" field instead of rewriting the creation time
+            session.put("CreatedTime",OffsetDateTime.now());
             objectRepository.save(session);
             return true;
         }
