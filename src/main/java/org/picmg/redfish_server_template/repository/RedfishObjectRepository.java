@@ -118,6 +118,12 @@ public class RedfishObjectRepository {
         mongoTemplate.findAllAndRemove(query,"RedfishObject");
     }
 
+    public void deleteWithQuery(CriteriaDefinition criteria) {
+        Query query = new Query();
+        query.addCriteria(criteria);
+        mongoTemplate.findAllAndRemove(query,"RedfishObject");
+    }
+
     public void insert(RedfishObject obj) {
         mongoTemplate.insert(obj, "RedfishDB");
     }

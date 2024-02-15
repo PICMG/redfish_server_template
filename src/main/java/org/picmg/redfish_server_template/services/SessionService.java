@@ -144,4 +144,10 @@ public class SessionService implements UserDetailsService {
                         .and("Id").is(id));
         return sessions.get(0);
     }
+
+    public RedfishObject getSessionByUserName(String userName) {
+        return objectRepository.findFirstWithQuery(
+                Criteria.where("_odata_type").is("Session")
+                        .and("UserName").is(userName));
+    }
 }
