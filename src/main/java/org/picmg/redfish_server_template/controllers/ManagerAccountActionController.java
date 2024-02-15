@@ -66,6 +66,9 @@ public class ManagerAccountActionController extends RedfishObjectController {
     @Autowired
     PasswordEncoder passwordEncoder;
 
+    @Autowired
+    AccountController accountController;
+
     @PostConstruct
     private void addPrivilegesForActions() {
         String[] privileges = {"ConfigureUsers","ConfigureSelf"};
@@ -115,6 +118,15 @@ public class ManagerAccountActionController extends RedfishObjectController {
         // get user information from current session's user name
         UserDetails sessionUserDetails = sessionService.loadUserByUsername(userName);
         String sessionPassword = sessionUserDetails.getPassword();
+
+        // verify that the password matches the password complexity requirements set by the AccountController
+        if (!accountController.isPasswordComplexityOk(parameters.get("NewPassword").toString())) {
+            RedfishError err =  redfishErrorResponseService.getErrorMessage(
+                    "Base","ActionParameterValueError",
+                    new ArrayList<>(Arrays.asList("Password", "ManagerAccount.ChangePassword")),
+                    new ArrayList<>());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).contentType(MediaType.APPLICATION_JSON).body(err.toString());
+        }
 
         // verify the session password against the password provided in the action's parameters
         if (!passwordEncoder.matches(parameters.get("SessionAccountPassword").toString(),sessionPassword)) {
