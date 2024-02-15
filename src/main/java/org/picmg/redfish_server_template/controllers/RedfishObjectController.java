@@ -698,6 +698,10 @@ public class RedfishObjectController {
         updatedObj.remove("_odata_id");
         updatedObj.remove("_odata_type");
         updatedObj.remove("_id");
+
+        // remove any write-only values
+        nullWriteOnlyValues(updatedObj);
+
         try {
             json = mapper.writeValueAsString(updatedObj);
         } catch (Exception ignored) {
@@ -803,6 +807,10 @@ public class RedfishObjectController {
         entity.remove("_odata_id");
         entity.remove("_odata_type");
         entity.remove("_id");
+
+        // null any write-only values
+        nullWriteOnlyValues(entity);
+
         try {
             json = mapper.writeValueAsString(entity);
         } catch (Exception ignored) {
