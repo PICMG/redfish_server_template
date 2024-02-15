@@ -45,7 +45,9 @@ import java.util.function.Function;
 
 import org.openapitools.jackson.nullable.JsonNullable;
 import org.picmg.redfish_server_template.RFmodels.custom.RedfishObject;
+import org.picmg.redfish_server_template.controllers.SessionController;
 import org.picmg.redfish_server_template.repository.RedfishObjectRepository;
+import org.picmg.redfish_server_template.services.SessionTimeoutService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -55,6 +57,10 @@ public class JWTService {
 
     @Autowired
     RedfishObjectRepository objectRepository;
+
+    @Autowired
+    SessionTimeoutService sessionTimeoutService;
+
     public static final long JWT_TOKEN_EXPIRY_TIME = 5 * 60 * 60; // in seconds
 
     public String extractJWTUsername(String jwt) throws IOException, NoSuchAlgorithmException {
@@ -141,38 +147,17 @@ public class JWTService {
     }
 
     public Boolean isTokenValid(String token) throws IOException, NoSuchAlgorithmException {
-        try{
-            final Map<String, Object> claims = extractJWTClaims(token);
-            RedfishObject session =
-                    objectRepository.findFirstWithQuery(
-                            Criteria.where("_odata_type").is("Session")
-                                    .and("Id").is(claims.get("SessionId")));
-            DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
-            OffsetDateTime createdAt = OffsetDateTime.parse(session.get("CreatedTime").toString(),dateTimeFormatter);
+        final Map<String, Object> claims = extractJWTClaims(token);
+        RedfishObject session =
+                objectRepository.findFirstWithQuery(
+                        Criteria.where("_odata_type").is("Session")
+                                .and("Id").is(claims.get("SessionId")));
+        if (session == null) return false;
 
-            // get the session timeout value from the session service object
-            RedfishObject sessionService1 =
-                    objectRepository.findFirstWithQuery(
-                            Criteria.where("_odata_type").is("SessionService"));
-            long sessionTimeOut = Long.parseLong(sessionService1.get("SessionTimeout").toString());
+        // checks for account lockout and expiration will be done at authorization time
 
-            // get the current date/time
-            LocalDateTime dateTime = createdAt.toLocalDateTime();
-
-            // if the session time has elapsed, delete the session
-            if (LocalDateTime.now().isAfter(dateTime.plusMinutes(sessionTimeOut))){
-                objectRepository.delete(session);
-                return false;
-            }
-
-            // TODO: this is not quite right
-            //  There should be a "last used" field instead of rewriting the creation time
-            session.put("CreatedTime",OffsetDateTime.now());
-            objectRepository.save(session);
-            return true;
-        }
-        catch (NullPointerException e){
-            return false;
-        }
+        // update the timeout service for this session
+        sessionTimeoutService.touch(session.get("UserName").toString());
+        return true;
     }
 }
