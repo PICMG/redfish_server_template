@@ -60,4 +60,11 @@ public class PrivilegeTableService {
         }
         return null;
     }
+
+    public void addActionPrivileges(String uri, String resourceType, String[] privileges) {
+        if (cache==null) {
+            cache = privilegeTableRepository.findAll();
+        }
+        cache.add(PrivilegeTableEntry.actionEntry(uri,resourceType,privileges));
+    }
 }

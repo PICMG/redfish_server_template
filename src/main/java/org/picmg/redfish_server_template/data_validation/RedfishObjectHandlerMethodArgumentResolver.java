@@ -997,6 +997,11 @@ public class RedfishObjectHandlerMethodArgumentResolver implements HandlerMethod
     // For this service, the only parameters that are allowed are those specified explicitly in the
     // resource.  Additional parameters will be identified as errors.
     //
+    // Parameters:
+    //    actionName - the name for the action (including the base type)
+    //    jsonNode - the json payload for this action request
+    //    actionInfoUri - the URI for the ActionInfo resource for this action
+    //
     // returns a list of RedifishErrors if there are problems found with the payload.
     // if no issues are found, the list will be empty.
     private List<RedfishError> evaluateActionParamsWithActionInfo(String actionName, JsonNode jsonNode, String actionInfoUri) throws Exception {
@@ -1031,18 +1036,102 @@ public class RedfishObjectHandlerMethodArgumentResolver implements HandlerMethod
     // For this service, the only parameters that are allowed are those specified explicitly in the
     // resource.  All parameters are assumed to be required.
     //
+    // Parameters:
+    //    actionName - the name for the action (including the base type)
+    //    jsonNode - the json payload for this action request
+    //    schema - a json representation of the base object's schema
+    //    actionInfoUri - the action definition from the resource itself.
+    //
     // returns a list of RedifishErrors if there are problems found with the payload.
     // if no issues are found, the list will be empty.
-    private List<RedfishError> evaluateActionParamsWithSchemaDefinition(String actionName, JsonNode jsonNode, Document actionDefinition) throws Exception {
+    private List<RedfishError> evaluateActionParamsWithSchemaDefinition(String actionName, JsonNode jsonNode, JsonNode schema, Document resourceActionDefinition) throws Exception {
         List<RedfishError> results = new ArrayList<>();
 
-        // loop through list of keys to see that the required parameters are present
-        for (String key: actionDefinition.keySet()) {
-            if (!key.endsWith("@Redfish.AllowableValues")) continue;
+        // check provided parameters against the schema for this resource
+        // first, does the actions section even exist in the schema?
+        if (!schema.has("definitions")) {
+            // action does not exist for the base resource
+            results.add(redfishErrorResponseService.getErrorMessage(
+                    "Base", "OperationFailed",
+                    new ArrayList<>(), new ArrayList<>())
+            );
+            return results;
+        }
+        JsonNode schemaDefinitions = schema.get("definitions");
+        if (!schemaDefinitions.has("Actions")) {
+            // action does not exist for the base resource
+            results.add(redfishErrorResponseService.getErrorMessage(
+                "Base", "ActionNotSupported",
+                    new ArrayList<>(Collections.singletonList(actionName)), new ArrayList<>())
+                    );
+            return results;
+        }
+        JsonNode schemaActions = schemaDefinitions.get("Actions");
+        // The actions section exists in the schema.  Does the properties field exist?
+        if (!schemaActions.has("properties")) {
+            // action does not exist for the base resource
+            results.add(redfishErrorResponseService.getErrorMessage(
+                    "Base", "ActionNotSupported",
+                    new ArrayList<>(Collections.singletonList(actionName)), new ArrayList<>())
+            );
+            return results;
+        }
+        JsonNode schemaActionProps = schemaActions.get("properties");
+        // The actions section exists in the schema.  Does the action exist?
+        if (!schemaActionProps.has("#"+actionName)) {
+            // action does not exist for the base resource
+            results.add(redfishErrorResponseService.getErrorMessage(
+                    "Base", "ActionNotSupported",
+                    new ArrayList<>(Collections.singletonList(actionName)), new ArrayList<>())
+            );
+            return results;
+        }
+        JsonNode schemaActionDef = schemaActionProps.get("#"+actionName);
 
-            String paramName = key.substring(0,key.length()-24);
+        JsonNode schemaParametersObj = null;
+        // The definition for the action has been found - there should either be a field called "parameters" that
+        // contains fields for each of the parameters to check, or there should be a field called $ref that references
+        // a fragment within the definitions section of the schema for the definition of the action
+        if (schemaActionDef.has("parameters")) {
+            schemaParametersObj = schemaActionDef.get("parameters");
+        } else if (schemaActionDef.has("$ref")) {
+            // here if the definition points to a schema fragment
+            // assume the fragment is within this schema file, within the definitions section
+            String definitionName = schemaActionDef.get("$ref").asText();
+            definitionName = definitionName.substring(definitionName.lastIndexOf("/")+1);
+            if (!schemaDefinitions.has(definitionName)) {
+                // name of definition fragment not found
+                results.add(redfishErrorResponseService.getErrorMessage(
+                        "Base", "OperationFailed",
+                        new ArrayList<>(), new ArrayList<>()));
+                return results;
+            }
+            if (schemaDefinitions.get(definitionName).has("parameters")) {
+                schemaParametersObj = schemaDefinitions.get(definitionName).get("parameters");
+            }
+        }
+        // check to see if no parameters were found
+        if (schemaParametersObj==null) {
+            results.add(redfishErrorResponseService.getErrorMessage(
+                    "Base", "OperationFailed",
+                    new ArrayList<>(), new ArrayList<>()));
+            return results;
+        }
 
-            if (!jsonNode.has(paramName)) {
+        // loop through list of parameters the required parameters are present
+        for (Iterator<String> it = schemaParametersObj.fieldNames(); it.hasNext(); ) {
+            String paramName = it.next();
+
+            boolean required = true;
+            String paramType = "string";
+            if (schemaParametersObj.get(paramName).has("requiredParameter")) {
+                required = schemaParametersObj.get(paramName).get("requiredParameter").asBoolean(true);
+            }
+            if (schemaParametersObj.get(paramName).has("type")) {
+                paramType = schemaParametersObj.get(paramName).get("type").asText("string");
+            }
+
+            if ((!jsonNode.has(paramName))&&(required)) {
                 // this is an error - a required parameter is missing
                 results.add(redfishErrorResponseService.getErrorMessage(
                         "Base",
@@ -1052,8 +1141,8 @@ public class RedfishObjectHandlerMethodArgumentResolver implements HandlerMethod
                 continue;
             }
 
-            if (!jsonNode.get(paramName).isTextual()) {
-                // all parameters must be of the string type
+            // check the type of the parameter against the specified type in the schema
+            if (!checkAgainstSchemaTypeHelper(paramType,jsonNode.get(paramName))) {
                 results.add(redfishErrorResponseService.getErrorMessage(
                         "Base",
                         "ActionParameterValueTypeError",
@@ -1061,11 +1150,18 @@ public class RedfishObjectHandlerMethodArgumentResolver implements HandlerMethod
                         new ArrayList<>()));
                 continue;
             }
+        }
+
+        // now check for annotations and verify parameters against them
+        for (String key: resourceActionDefinition.keySet()) {
+            if (!key.endsWith("@Redfish.AllowableValues")) continue;
+
+            String paramName = key.substring(0,key.length()-24);
 
             String paramValue = jsonNode.get(paramName).asText();
             // this action might throw an exception if it cannot convert to a list.  The calling function will
             // catch it though.
-            ArrayList<String> allowableValues = actionDefinition.get(key, ArrayList.class);
+            ArrayList<String> allowableValues = resourceActionDefinition.get(key, ArrayList.class);
             boolean foundAllowedValue = false;
             for (String allowed: allowableValues) {
                 if (allowed.equals(paramValue)) {
@@ -1087,7 +1183,7 @@ public class RedfishObjectHandlerMethodArgumentResolver implements HandlerMethod
         Iterator<String> fields = jsonNode.fieldNames();
         while (fields.hasNext()) {
             String paramName = fields.next();
-            if (!actionDefinition.containsKey(paramName+"@Redfish.AllowableValues")) {
+            if (!schemaParametersObj.has(paramName)) {
                 results.add(redfishErrorResponseService.getErrorMessage(
                         "Base",
                         "ActionParameterUnknown",
@@ -1122,13 +1218,21 @@ public class RedfishObjectHandlerMethodArgumentResolver implements HandlerMethod
         // should this return a resource not found response?
         if (!targetUri.equals(uri)) throw new Exception();
 
+        // load the schema for the base type for this action
+        String schemaId = baseObject.getAtOdataType();
+        String schemaSource = schemaId.substring(0,schemaId.lastIndexOf("."));
+        schemaSource = schemaSource.replace("#","") + ".json";
+        String schemaClass = schemaId.substring(schemaId.lastIndexOf(".")+1);
+        JsonNode schema = objectMapper.readTree(schemaService.getFromSource(schemaSource).getSchema());
+
         // here if the target URI matches a valid Action URI - now determine if the URI should be checked
-        // using @Redfish annotations, or with the newer ActionInfo semantic.
+        // using @Redfish and the Schema, or with the ActionInfo semantic.
         if (actionDefinition.containsKey("@Redfish.ActionInfo")) {
             String actionInfoUri = actionDefinition.get("@Redfish.ActionInfo", String.class);
             results = evaluateActionParamsWithActionInfo(actionName, json,actionInfoUri);
         } else {
-            results = evaluateActionParamsWithSchemaDefinition(actionName, json, actionDefinition);
+            // check using the schema and annotations in the resource
+            results = evaluateActionParamsWithSchemaDefinition(actionName, json, schema, actionDefinition);
         }
         return results;
     }
@@ -1150,30 +1254,31 @@ public class RedfishObjectHandlerMethodArgumentResolver implements HandlerMethod
         assert req != null;  // this should never happen, since this function is called by valid http requests
         String uri = req.getRequestURI();
 
+        if (uri.contains("/Actions/") && (req.getMethod().equals("POST"))) {
+            // attempt to validate the action parameters
+            List<RedfishError> results = new ArrayList<>();
+            try {
+                String body = StreamUtils.copyToString(req.getInputStream(), StandardCharsets.UTF_8);
+                // convert the body string into a JsonNode object
+                JsonNode jsonNode = objectMapper.readTree(body);
+                results = prepareForActionValidation(uri, jsonNode);
+                if (results.isEmpty()) {
+                    // here if everything checks out.  Update the object's odata type to match the type that
+                    // the object compared against
+                    return objectMapper.treeToValue(jsonNode, parameter.getParameterType());
+                }
+            } catch (Exception ignored) {
+            }
+            // an exception has occurred - throw a redfisherror exception
+            throw new RedfishValidationException(results);
+        }
+
         // the privilege table maps all acceptable URIs to their Entities and Privileges.  Use this lookup to
         // find the associated entity type for this request.
         String schemaClass = privilegeTableService.getEntityTypeFromUri(uri);
         if (schemaClass == null) {
             // this will happen if there is no entry for the class in the privilege table.
             // This should only occur for posts to Actions
-            if (uri.contains("/Actions/") && (req.getMethod().equals("POST"))) {
-                // attempt to validate the action parameters
-                List<RedfishError> results = new ArrayList<>();
-                try {
-                    String body = StreamUtils.copyToString(req.getInputStream(), StandardCharsets.UTF_8);
-                    // convert the body string into a JsonNode object
-                    JsonNode jsonNode = objectMapper.readTree(body);
-                    results = prepareForActionValidation(uri, jsonNode);
-                    if (results.isEmpty()) {
-                        // here if everything checks out.  Update the object's odata type to match the type that
-                        // the object compared against
-                        return objectMapper.treeToValue(jsonNode, parameter.getParameterType());
-                    }
-                } catch (Exception ignored) {
-                }
-                // an exception has occurred - throw a redfisherror exception
-                throw new RedfishValidationException(results);
-            }
             // throw an exception - no schema has been found for this method
             throw new RedfishValidationException(null);
         }
