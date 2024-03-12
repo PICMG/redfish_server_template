@@ -30,11 +30,7 @@ public class RedfishObject extends Document {
     }
 
     public String getAtOdataEtag() {
-        return this.get("@odata.etag").toString();
-    }
-
-    public void setAtOdataEtag(String atOdataEtag) {
-        this.put("@odata.etag", atOdataEtag);
+        return this.get("_odata_etag","00000000000000000000000000000000");
     }
 
     public String getId() {

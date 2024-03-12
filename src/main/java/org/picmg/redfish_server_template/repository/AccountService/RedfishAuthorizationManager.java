@@ -43,7 +43,7 @@ public final class RedfishAuthorizationManager implements AuthorizationManager<R
         String uri = object.getRequest().getRequestURI();
 
         // DEBUG: temporary for testing only
-        if (uri.contains("IIoT")) {
+        if (uri.contains("Automation")) {
             return new AuthorizationDecision(true);
         }
         // first, see if an entry exists for the uri, and use that

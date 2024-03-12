@@ -20,7 +20,6 @@ public class RedfishCollection extends RedfishObject {
     }
 
     public void setMembers(List<Document> members) {
-
         put("Members",members);
         put("Members@odata.count", members.size());
     }

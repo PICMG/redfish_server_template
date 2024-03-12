@@ -1,14 +1,14 @@
 package org.picmg.redfish_server_template.repository;
 
+import com.mongodb.client.model.Updates;
 import org.bson.Document;
 import org.picmg.redfish_server_template.RFmodels.custom.RedfishCollection;
 import org.picmg.redfish_server_template.RFmodels.custom.RedfishObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.CriteriaDefinition;
-import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.*;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -17,8 +17,37 @@ import java.util.List;
 
 @Component
 public class RedfishObjectRepository {
+    long etagTime = System.currentTimeMillis();
+    long etagCount = 0;
+    final Object etagObj = new Object();
     @Autowired
     MongoTemplate mongoTemplate;
+
+
+    // this function creates a new etag string based on the current time and number of
+    // etags already created during the current millisecond.
+    public String calcEtag() {
+        synchronized (etagObj) {
+            if (System.currentTimeMillis()!=etagTime) {
+                etagCount = 0;
+            }
+            etagTime = System.currentTimeMillis();
+            return String.format("%1$016X%2$016X",etagTime,etagCount++);
+        }
+    }
+
+    // update the collection etag if a member object because a member object has been altered
+    private void updateCollectionEtag(String uri) {
+        // get the uri of the containing object
+        String collectionUri = uri.substring(0,uri.lastIndexOf('/'));
+
+        // attempt to find the object in the repository
+        Query query = new Query();
+        query.addCriteria(Criteria.where("_odata_id").is(collectionUri).and("_odata_type").regex(".*Collection$"));
+        Update update = new Update().set("_odata_etag",calcEtag());
+        FindAndModifyOptions options = new FindAndModifyOptions().returnNew(true).upsert(false);
+        mongoTemplate.findAndModify(query, update, options, Document.class, "RedfishObject");
+    }
 
     public void save(RedfishObject obj ) {
         if (!obj.containsKey("@odata.id")) {
@@ -35,6 +64,12 @@ public class RedfishObjectRepository {
             }
             obj.put("_odata_type",type);
         }
+
+        // update the collection etag (if any)
+        updateCollectionEtag(obj.getString("_odata_id"));
+
+        // update/add the edata annotation field
+        obj.put("_odata_etag",calcEtag());
         mongoTemplate.save(obj,"RedfishObject");
     }
 
@@ -44,6 +79,13 @@ public class RedfishObjectRepository {
         // for updates, the document to write cannot include an _id field
         obj.remove("_id");
         query.addCriteria(ctr);
+
+        // update the collection etag (if any)
+        updateCollectionEtag(obj.getString("_odata_id"));
+
+        // update/add the edata annotation field
+        obj.put("_odata_etag",calcEtag());
+
         mongoTemplate.findAndReplace(query,obj,"RedfishObject");
     }
 
@@ -113,6 +155,9 @@ public class RedfishObjectRepository {
     }
 
     public void delete(RedfishObject obj) {
+        // update the collection etag (if any)
+        updateCollectionEtag(obj.getAtOdataId());
+
         Query query = new Query();
         query.addCriteria(Criteria.where("_odata_id").is(obj.getAtOdataId()));
         mongoTemplate.findAllAndRemove(query,"RedfishObject");
@@ -121,10 +166,18 @@ public class RedfishObjectRepository {
     public void deleteWithQuery(CriteriaDefinition criteria) {
         Query query = new Query();
         query.addCriteria(criteria);
-        mongoTemplate.findAllAndRemove(query,"RedfishObject");
+        List<Document> listDoc = mongoTemplate.findAllAndRemove(query,"RedfishObject");
+        for (Document doc: listDoc) {
+            if (doc.containsKey("@odata.id")) {
+                updateCollectionEtag(doc.getString("@odata.id"));
+            }
+        }
     }
 
     public void insert(RedfishObject obj) {
+        // update the collection etag (if any)
+        updateCollectionEtag(obj.getAtOdataId());
+
         mongoTemplate.insert(obj, "RedfishDB");
     }
 }

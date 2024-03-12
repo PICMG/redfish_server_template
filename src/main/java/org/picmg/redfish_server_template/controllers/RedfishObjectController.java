@@ -214,6 +214,23 @@ public class RedfishObjectController {
     }
 
     public ResponseEntity<?> processObjectGet(RedfishObject entity, HttpServletRequest request) {
+        String ifMatch = request.getHeader("If-Match");
+        String ifNoneMatch = request.getHeader("If-None-Match");
+        if (ifMatch!=null) {
+            ifMatch = ifMatch.replace("\"", "");
+            if ((!ifMatch.equals("*")) && (!entity.getAtOdataEtag().equals(ifMatch))) {
+                // here if the precondition was not met
+                return ResponseEntity.status(HttpStatus.PRECONDITION_FAILED).body("");
+            }
+        }
+        if (ifNoneMatch!=null) {
+            ifNoneMatch = ifNoneMatch.replace("\"", "");
+            if ((ifNoneMatch.equals("*"))||(entity.getAtOdataEtag().equals(ifNoneMatch))) {
+                // the precondition failed - there should be no matches for this to proceed.
+                return ResponseEntity.status(HttpStatus.NOT_MODIFIED).body("");
+            }
+        }
+
         // Check parameters for unknown or unsupported parameters
         Map<String,String[]> parameters = request.getParameterMap();
         ArrayList<String> unknownParameters = new ArrayList<>();
@@ -284,7 +301,9 @@ public class RedfishObjectController {
         entity.remove("_odata_id");
         entity.remove("_odata_type");
         entity.remove("_id");
-
+        String etag = entity.getAtOdataEtag();
+        entity.put("@odata.etag",etag);
+        entity.remove("_odata_etag");
         // Replace any write-only content with nulls
         nullWriteOnlyValues(entity);
 
@@ -295,10 +314,27 @@ public class RedfishObjectController {
 
         // here if the request is valid - convert the POJO to a clean JSON string and return the results
         // within the body of the HTTP response.
-        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(json);
+        return ResponseEntity.ok().eTag(etag).contentType(MediaType.APPLICATION_JSON).body(json);
     }
 
     public ResponseEntity<?> processCollectionGet(RedfishCollection entity, HttpServletRequest request) {
+        String ifMatch = request.getHeader("If-Match");
+        String ifNoneMatch = request.getHeader("If-None-Match");
+        if (ifMatch!=null) {
+            ifMatch = ifMatch.replace("\"", "");
+            if ((!ifMatch.equals("*")) && (!entity.getAtOdataEtag().equals(ifMatch))) {
+                // here if the precondition was not met
+                return ResponseEntity.status(HttpStatus.PRECONDITION_FAILED).body("");
+            }
+        }
+        if (ifNoneMatch!=null) {
+            ifNoneMatch = ifNoneMatch.replace("\"", "");
+            if ((ifNoneMatch.equals("*"))||(entity.getAtOdataEtag().equals(ifNoneMatch))) {
+                // the precondition failed - there should be no matches for this to proceed.
+                return ResponseEntity.status(HttpStatus.NOT_MODIFIED).body("");
+            }
+        }
+
         // get the database entry associated with this path
         String uri = request.getRequestURI();
 
@@ -420,6 +456,9 @@ public class RedfishObjectController {
         entity.remove("_odata_id");
         entity.remove("_odata_type");
         entity.remove("_id");
+        String etag = entity.getAtOdataEtag();
+        entity.put("@odata.etag",entity.getAtOdataEtag());
+        entity.remove("_odata_etag");
 
         nullWriteOnlyValues(entity);
         try {
@@ -429,7 +468,7 @@ public class RedfishObjectController {
 
         // here if the request is valid - convert the POJO to a clean JSON string and return the results
         // within the body of the HTTP response.
-        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(json);
+        return ResponseEntity.ok().eTag(etag).contentType(MediaType.APPLICATION_JSON).body(json);
     }
 
     // onPostCheckForExistence()
@@ -698,6 +737,9 @@ public class RedfishObjectController {
         updatedObj.remove("_odata_id");
         updatedObj.remove("_odata_type");
         updatedObj.remove("_id");
+        String etag = updatedObj.getAtOdataEtag();
+        updatedObj.put("@odata.etag",etag);
+        updatedObj.remove("_odata_etag");
 
         // remove any write-only values
         nullWriteOnlyValues(updatedObj);
@@ -714,6 +756,7 @@ public class RedfishObjectController {
         return ResponseEntity
                 .status(response.getStatusCode())
                 .headers(headers)
+                .eTag(etag)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(json);
     }
@@ -748,6 +791,23 @@ public class RedfishObjectController {
 
         if (entity == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("");
+        }
+
+        String ifMatch = request.getHeader("If-Match");
+        String ifNoneMatch = request.getHeader("If-None-Match");
+        if (ifMatch!=null) {
+            ifMatch = ifMatch.replace("\"", "");
+            if ((!ifMatch.equals("*")) && (!entity.getAtOdataEtag().equals(ifMatch))) {
+                // here if the precondition was not met
+                return ResponseEntity.status(HttpStatus.PRECONDITION_FAILED).body("");
+            }
+        }
+        if (ifNoneMatch!=null) {
+            ifNoneMatch = ifNoneMatch.replace("\"", "");
+            if ((ifNoneMatch.equals("*"))||(entity.getAtOdataEtag().equals(ifNoneMatch))) {
+                // the precondition failed - there should be no matches for this to proceed.
+                return ResponseEntity.status(HttpStatus.NOT_MODIFIED).body("");
+            }
         }
 
         // step 1: remove read-only fields from the requested changes, creating errors as we go
@@ -807,6 +867,9 @@ public class RedfishObjectController {
         entity.remove("_odata_id");
         entity.remove("_odata_type");
         entity.remove("_id");
+        String etag = entity.getAtOdataEtag();
+        entity.put("@odata.etag",entity.getAtOdataEtag());
+        entity.remove("_odata_etag");
 
         // null any write-only values
         nullWriteOnlyValues(entity);
@@ -817,6 +880,7 @@ public class RedfishObjectController {
         }
         return ResponseEntity
                 .status(HttpStatus.OK)
+                .eTag(etag)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(json);
     }
@@ -872,6 +936,8 @@ public class RedfishObjectController {
         entity.remove("_odata_id");
         entity.remove("_odata_type");
         entity.remove("_id");
+        entity.put("@odata.etag",entity.getAtOdataEtag());
+        entity.remove("_odata_etag");
 
         // Replace any write-only content with nulls
         nullWriteOnlyValues(entity);

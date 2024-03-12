@@ -33,8 +33,6 @@ import org.picmg.redfish_server_template.services.IIoTJobServiceService;
 import org.picmg.redfish_server_template.services.TaskService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -47,7 +45,7 @@ import static java.lang.Thread.sleep;
 
 @RestController
 @RequestMapping(value = {"/redfish/v1/IIoTJobService/Documents/*/Actions/*"})
-public class IIoTJobDocumentActionController extends RedfishObjectController {
+public class JobDocumentActionController extends RedfishObjectController {
     @Autowired
     RedfishObjectRepository objectRepository;
 

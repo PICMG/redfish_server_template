@@ -79,11 +79,14 @@ public class RootController extends RedfishObjectController {
         root.remove("_odata_id");
         root.remove("_odata_type");
         root.remove("_id");
+        String ekey = root.getAtOdataEtag();
+        root.remove("_odata_tag");
+        root.put("@odata.etag",ekey);
         try {
             json = mapper.writeValueAsString(root);
         } catch (Exception ignored) {
         }
-        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(json);
+        return ResponseEntity.ok().eTag(ekey).contentType(MediaType.APPLICATION_JSON).body(json);
     }
 
     @GetMapping(value = "/v1/$metadata")
