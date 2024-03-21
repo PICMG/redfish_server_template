@@ -49,6 +49,14 @@ public class RedfishObjectRepository {
         mongoTemplate.findAndModify(query, update, options, Document.class, "RedfishObject");
     }
 
+    public Document findAndUpdate(Criteria criteria, Update update) {
+        // attempt to find the object in the repository
+        Query query = new Query();
+        query.addCriteria(criteria);
+        FindAndModifyOptions options = new FindAndModifyOptions().returnNew(true).upsert(false);
+        return mongoTemplate.findAndModify(query, update, options, Document.class, "RedfishObject");
+    }
+
     public void save(RedfishObject obj ) {
         if (!obj.containsKey("@odata.id")) {
             return;
@@ -179,5 +187,11 @@ public class RedfishObjectRepository {
         updateCollectionEtag(obj.getAtOdataId());
 
         mongoTemplate.insert(obj, "RedfishDB");
+    }
+
+    public List<String> getDistinctWithQuery(String collection, CriteriaDefinition criteria, String property) {
+        Query query = new Query();
+        query.addCriteria(criteria);
+        return  mongoTemplate.findDistinct(query, property, collection, String.class);
     }
 }

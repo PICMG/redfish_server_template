@@ -83,7 +83,6 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                                 .antMatchers("/redfish/v1/odata").permitAll()
                                 .antMatchers("/redfish/v1/$metadata").permitAll()
                                 .antMatchers(HttpMethod.POST, "/redfish/v1/SessionService/Sessions").permitAll()
-                                .antMatchers("/redfish/v1/EventService/SSE").permitAll()
                                 .anyRequest().access(redfishAuthorizationManager)
                 )
                 .httpBasic((configureHttpBasic) ->

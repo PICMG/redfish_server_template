@@ -933,7 +933,7 @@ public class RedfishObjectHandlerMethodArgumentResolver implements HandlerMethod
             // see if a corresponding parameter has been given
             if (!jsonNode.has(parameterName)) {
                 // if the parameter is not required, move on to the next parameter
-                if (!parameterDefinition.getBoolean("Required", true)) continue;
+                if (!parameterDefinition.getBoolean("Required", false)) continue;
 
                 // otherwise, this is an error
                 results.add(redfishErrorResponseService.getErrorMessage(
@@ -1122,10 +1122,10 @@ public class RedfishObjectHandlerMethodArgumentResolver implements HandlerMethod
         for (Iterator<String> it = schemaParametersObj.fieldNames(); it.hasNext(); ) {
             String paramName = it.next();
 
-            boolean required = true;
+            boolean required = false;
             String paramType = "string";
             if (schemaParametersObj.get(paramName).has("requiredParameter")) {
-                required = schemaParametersObj.get(paramName).get("requiredParameter").asBoolean(true);
+                required = schemaParametersObj.get(paramName).get("requiredParameter").asBoolean(false);
             }
             if (schemaParametersObj.get(paramName).has("type")) {
                 paramType = schemaParametersObj.get(paramName).get("type").asText("string");
@@ -1142,7 +1142,7 @@ public class RedfishObjectHandlerMethodArgumentResolver implements HandlerMethod
             }
 
             // check the type of the parameter against the specified type in the schema
-            if (!checkAgainstSchemaTypeHelper(paramType,jsonNode.get(paramName))) {
+            if ((jsonNode.has(paramName))&&(!checkAgainstSchemaTypeHelper(paramType,jsonNode.get(paramName)))) {
                 results.add(redfishErrorResponseService.getErrorMessage(
                         "Base",
                         "ActionParameterValueTypeError",
