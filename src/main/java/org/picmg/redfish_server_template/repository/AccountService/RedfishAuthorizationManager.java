@@ -51,9 +51,16 @@ public final class RedfishAuthorizationManager implements AuthorizationManager<R
         if ((entry != null) && (entry.isAuthorized(method, authorities)))
             return new AuthorizationDecision(true);
 
-        // otherwise, if the uri is or an action, try to use the privileges for the base resource
+        // otherwise, if the uri is an action, try to use the privileges for the base resource
         if (uri.contains("/Actions/")&&(method.equals("POST"))) {
-            entry = privilegeTableService.getPrivilegeTableEntryFromUri(uri.substring(0,uri.indexOf("/Actions/")-1));
+            entry = privilegeTableService.getPrivilegeTableEntryFromUri(uri.substring(0,uri.indexOf("/Actions/")));
+            if ((entry != null) && (entry.isAuthorized(method, authorities)))
+                return new AuthorizationDecision(true);
+        }
+
+        // otherwise, if the uri is an SSE request, try to use the privileges for the base's subscription resource
+        if (uri.contains("/SSE")&&(method.equals("GET"))) {
+            entry = privilegeTableService.getPrivilegeTableEntryFromUri(uri.substring(0,uri.indexOf("/SSE"))+"/Subscriptions");
             if ((entry != null) && (entry.isAuthorized(method, authorities)))
                 return new AuthorizationDecision(true);
         }
