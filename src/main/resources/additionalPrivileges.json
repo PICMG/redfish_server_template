@@ -1,0 +1,88 @@
+{
+  "Mappings": [
+    {
+      "uri": "/redfish/v1/AutomationNodes",
+      "Entity": "AutomationNodeCollection",
+      "OperationMap": {
+        "GET": [{"Privilege": ["Login"]}],
+        "HEAD": [{"Privilege": ["Login"]}],
+        "PATCH": [{"Privilege": ["ConfigureComponents"]}],
+        "PUT": [{"Privilege": ["ConfigureComponents"]}],
+        "DELETE": [{"Privilege": ["ConfigureComponents"]}],
+        "POST": [{"Privilege": ["ConfigureComponents"]}]
+      }
+    },
+     {
+        "uri": "/redfish/v1/AutomationNodes/[^\/]+",
+        "Entity": "AutomationNode",
+        "OperationMap": {
+           "GET": [{"Privilege": ["Login"]}],
+           "HEAD": [{"Privilege": ["Login"]}],
+           "PATCH": [{"Privilege": ["ConfigureComponents"]}],
+           "PUT": [{"Privilege": ["ConfigureComponents"]}],
+           "DELETE": [{"Privilege": ["ConfigureComponents"]}],
+           "POST": [{"Privilege": ["ConfigureComponents"]}]
+        }
+     },
+     {
+        "uri": "/redfish/v1/AutomationNodes/[^\/]+/AutomationInstrumentation",
+        "Entity": "AutomationInstrumentation",
+        "OperationMap": {
+           "GET": [{"Privilege": ["Login"]}],
+           "HEAD": [{"Privilege": ["Login"]}],
+           "PATCH": [{"Privilege": ["ConfigureComponents"]}],
+           "PUT": [{"Privilege": ["ConfigureComponents"]}],
+           "DELETE": [{"Privilege": ["ConfigureComponents"]}],
+           "POST": [{"Privilege": ["ConfigureComponents"]}]
+        }
+     },
+     {
+        "uri": "/redfish/v1/JobService/Documents",
+        "Entity": "JobDocumentCollection",
+        "OperationMap": {
+           "GET": [{"Privilege": ["Login"]}],
+           "HEAD": [{"Privilege": ["Login"]}],
+           "PATCH": [{"Privilege": ["ConfigureComponents"]}],
+           "PUT": [{"Privilege": ["ConfigureComponents"]}],
+           "DELETE": [{"Privilege": ["ConfigureComponents"]}],
+           "POST": [{"Privilege": ["ConfigureComponents"]}]
+        }
+     },
+     {
+        "uri": "/redfish/v1/JobService/Documents/[^\/]+",
+        "Entity": "JobDocument",
+        "OperationMap": {
+           "GET": [{"Privilege": ["Login"]}],
+           "HEAD": [{"Privilege": ["Login"]}],
+           "PATCH": [{"Privilege": ["ConfigureComponents"]}],
+           "PUT": [{"Privilege": ["ConfigureComponents"]}],
+           "DELETE": [{"Privilege": ["ConfigureComponents"]}],
+           "POST": [{"Privilege": ["ConfigureComponents"]}]
+        }
+     },
+     {
+        "uri": "/redfish/v1/JobService/Executors",
+        "Entity": "JobExecutorCollection",
+        "OperationMap": {
+           "GET": [{"Privilege": ["Login"]}],
+           "HEAD": [{"Privilege": ["Login"]}],
+           "PATCH": [{"Privilege": ["ConfigureComponents"]}],
+           "PUT": [{"Privilege": ["ConfigureComponents"]}],
+           "DELETE": [{"Privilege": ["ConfigureComponents"]}],
+           "POST": [{"Privilege": ["ConfigureComponents"]}]
+        }
+     },
+     {
+        "uri": "/redfish/v1/JobService/Executors/[^\/]+",
+        "Entity": "JobExecutor",
+        "OperationMap": {
+           "GET": [{"Privilege": ["Login"]}],
+           "HEAD": [{"Privilege": ["Login"]}],
+           "PATCH": [{"Privilege": ["ConfigureComponents"]}],
+           "PUT": [{"Privilege": ["ConfigureComponents"]}],
+           "DELETE": [{"Privilege": ["ConfigureComponents"]}],
+           "POST": [{"Privilege": ["ConfigureComponents"]}]
+        }
+     }
+  ]
+}

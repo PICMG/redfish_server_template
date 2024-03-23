@@ -44,7 +44,7 @@ import static java.lang.Thread.sleep;
 
 
 @RestController
-@RequestMapping(value = {"/redfish/v1/IIoTJobService/Documents/*/Actions/*"})
+@RequestMapping(value = {"/redfish/v1/JobService/Documents/*/Actions/*"})
 public class JobDocumentActionController extends RedfishObjectController {
     @Autowired
     RedfishObjectRepository objectRepository;

@@ -1,6 +1,7 @@
 package org.picmg.redfish_server_template.RFmodels.custom;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.bson.types.ObjectId;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -62,12 +63,40 @@ public class PrivilegeTableEntry {
 
     public String getUri() {return uri;}
 
+    public void setUri(String uri) {this.uri = uri;}
+
     public String getEntity() {return entity;}
+
+    public void setEntity(String entity) {this.entity = entity;}
 
     public boolean isMatchingUrl(String uri) {
         Pattern regex = Pattern.compile(this.uri);
         Matcher matcher = regex.matcher(uri);
         return matcher.matches();
+    }
+
+    public boolean setOperationMap(JsonNode jsonMap) {
+        String[] operators = {"GET", "HEAD", "PATCH", "PUT", "DELETE", "POST"};
+        operationMap = new LinkedHashMap<>();
+
+        for (String operator: operators) {
+            if (!jsonMap.has(operator)) return false;
+            if (!jsonMap.get(operator).isArray()) return false;
+            operationMap.put(operator, new ArrayList<Object>());
+            for (JsonNode privObj : jsonMap.get(operator)) {
+                if (!privObj.isContainerNode()) return false;
+                if (!privObj.has("Privilege")) return false;
+                if (!privObj.get("Privilege").isArray()) return false;
+                ArrayList<String> privileges = new ArrayList<>();
+                for (JsonNode priv : privObj.get("Privilege")) {
+                    privileges.add(priv.asText());
+                }
+                LinkedHashMap<String,Object> privMap = new LinkedHashMap<>();
+                privMap.put("Privilege", privileges);
+                ((ArrayList<Object>) operationMap.get(operator)).add(privMap);
+            }
+        }
+        return true;
     }
 
     public boolean isAuthorized(String operation, Collection<? extends GrantedAuthority> roles) {
