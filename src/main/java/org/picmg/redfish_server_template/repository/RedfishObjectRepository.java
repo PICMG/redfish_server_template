@@ -173,8 +173,8 @@ public class RedfishObjectRepository {
     public void deleteWithQuery(CriteriaDefinition criteria) {
         Query query = new Query();
         query.addCriteria(criteria);
-        List<Document> listDoc = mongoTemplate.findAllAndRemove(query,"RedfishObject");
-        for (Document doc: listDoc) {
+        List<Document> listObs = mongoTemplate.findAllAndRemove(query, Document.class, "RedfishObject");
+        for (Document doc: listObs) {
             if (doc.containsKey("@odata.id")) {
                 updateCollectionEtag(doc.getString("@odata.id"));
             }
