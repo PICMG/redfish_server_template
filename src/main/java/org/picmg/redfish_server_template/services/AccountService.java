@@ -74,14 +74,14 @@ public class AccountService {
     @Autowired
     LogService logService;
 
+    // default values for the service behavior - if specified in the database, these will override the database
     private boolean requireChangePasswordAction = false;
-    private long accountLockoutCounterResetAfter = 0;
-    private boolean accountLockoutCounterResetEnabled = false;
-    private long accountLockoutDuration = 0;
-    private long accountLockoutThreshold = 0;
-    private long authFailureLoggingThreshold = 0;
-
-    private long passwordExpirationDays = 0;
+    private long accountLockoutCounterResetAfter = 30;
+    private boolean accountLockoutCounterResetEnabled = true;
+    private long accountLockoutDuration = 30;
+    private long accountLockoutThreshold = 5;
+    private long authFailureLoggingThreshold = 3;
+    private long passwordExpirationDays = 30;
 
     private HashMap<String, PasswordStats> pwStatCollection = new HashMap<>();
 
@@ -94,26 +94,21 @@ public class AccountService {
         }
 
         // initialize account service operation
-        List<String> resultslist = objectRepository.getDistinctStringsWithQuery("RedfishObject", Criteria.where("_odata_type").is("AccountService"),"RequireChangePasswordAction");
-        if ((resultslist!=null)&&(!resultslist.isEmpty())) {
-            if (resultslist.get(0).toLowerCase().equals("true")) requireChangePasswordAction = true;
-        }
-        List<Long> llist = objectRepository.getDistinctLongWithQuery("RedfishObject", Criteria.where("_odata_type").is("AccountService"),"AccountLockoutCounterResetAfter");
-        if ((llist!=null)&&(!llist.isEmpty())) accountLockoutCounterResetAfter = llist.get(0);
-        List<Boolean> blist = objectRepository.getDistinctBooleanWithQuery("RedfishObject", Criteria.where("_odata_type").is("AccountService"),"AccountLockoutCounterResetEnabled");
-        if ((blist!=null)&&(!blist.isEmpty())) accountLockoutCounterResetEnabled = blist.get(0);
-        llist = objectRepository.getDistinctLongWithQuery("RedfishObject", Criteria.where("_odata_type").is("AccountService"),"AccountLockoutDuration");
-        if ((llist!=null)&&(!llist.isEmpty())) accountLockoutDuration = llist.get(0);
-        llist = objectRepository.getDistinctLongWithQuery("RedfishObject", Criteria.where("_odata_type").is("AccountService"),"AccountLockoutThreshold");
-        if ((llist!=null)&&(!llist.isEmpty())) accountLockoutThreshold = llist.get(0);
-        llist = objectRepository.getDistinctLongWithQuery("RedfishObject", Criteria.where("_odata_type").is("AccountService"),"AuthFailureLoggingThreshold");
-        if ((llist!=null)&&(!llist.isEmpty())) authFailureLoggingThreshold = llist.get(0);
-        llist = objectRepository.getDistinctLongWithQuery("RedfishObject", Criteria.where("_odata_type").is("AccountService"),"PasswordExpirationDays");
-        if ((llist!=null)&&(!llist.isEmpty())) passwordExpirationDays = llist.get(0);
+        Update update = new Update();
+        update.set("RequireChangePasswordAction", requireChangePasswordAction);
+        update.set("RequireChangePasswordAction", requireChangePasswordAction);
+        update.set("AccountLockoutCounterResetAfter", accountLockoutCounterResetAfter);
+        update.set("AccountLockoutCounterResetEnabled", accountLockoutCounterResetEnabled);
+        update.set("AccountLockoutDuration", accountLockoutDuration);
+        update.set("AccountLockoutThreshold", accountLockoutThreshold);
+        update.set("AuthFailureLoggingThreshold", authFailureLoggingThreshold);
+        update.set("PasswordExpirationDays", passwordExpirationDays);
+        objectRepository.findAndUpdate(Criteria.where("_odata_type").is("AccountService"),update);
     }
 
     public boolean isChangePasswordActionRequired() { return requireChangePasswordAction; }
 
+    public long getPasswordExpirationDays() {return passwordExpirationDays;}
     @Async
     //  This method assumes that the account parameter holds a valid account Redfish object
     //
@@ -157,7 +152,7 @@ public class AccountService {
     // Encode and store the password and update all password-related statistics
     //
     // returns true if the password was updated, otherwise, returns false.
-    public boolean updatePassword(String userName, String password)  {
+    public boolean updatePassword(String userName, String password, RedfishObject obj)  {
         RedfishObject userAccount = objectRepository.findFirstWithQuery(
                 Criteria.where("_odata_type").is("ManagerAccount")
                         .and("UserName").is(userName));
@@ -171,13 +166,18 @@ public class AccountService {
         } else {
             Update update = new Update();
             if (passwordExpirationDays != 0) {
-                update.set("PasswordExpiration", LocalDateTime.now().plusDays(passwordExpirationDays));
+                update.set("PasswordExpiration", LocalDateTime.now().plusDays(passwordExpirationDays).toString());
+                if (obj!=null) obj.put("PasswordExpiration",LocalDateTime.now().plusDays(passwordExpirationDays).toString());
             }
             update.set("Password", encPassword);
-            if (userAccount.containsKey("Locked"))
+            if (userAccount.containsKey("Locked")) {
                 update.set("Locked", false);
-            if (userAccount.containsKey("PasswordChangeRequired"))
+                if (obj != null) obj.put("Locked", false);
+            }
+            if ((userAccount.containsKey("PasswordChangeRequired"))&&(userAccount.getBoolean("PasswordChangeRequired",false))) {
                 update.set("PasswordChangeRequired", false);
+                if (obj!=null) obj.put("PasswordChangeRequired", false);
+            }
             objectRepository.findAndUpdate(
                     Criteria.where("_odata_type").is("ManagerAccount")
                     .and("UserName").is(userName), update);
@@ -271,7 +271,7 @@ public class AccountService {
         objectRepository.findAndUpdate(Criteria.where("_odata_id").is(odataid), Update.update("Locked",true));
     }
 
-    private boolean isPasswordChangeRequired(RedfishObject account) {
+    public boolean isPasswordChangeRequired(RedfishObject account) {
         if ((account.getBoolean("PasswordChangeRequired",false)||(account.containsKey("PasswordExpiration"))&&(account.get("PasswordExpiration")!=null))) {
             LocalDateTime expiration = LocalDateTime.parse(account.getString("PasswordExpiration"));
             if (expiration.isBefore(LocalDateTime.now())) {
@@ -313,6 +313,27 @@ public class AccountService {
             pwStatCollection.put(username,stats);
         }
 
+        // if the target is also a ManagerAccount, update it's password stats based on current time
+        RedfishObject targetAccount = objectRepository.findFirstWithQuery(
+                Criteria.where("_odata_id").is(req.getRequestURI()));
+        if (targetAccount!=null) {
+            boolean targtAccountLocked = targetAccount.getBoolean("Locked", false);
+            String targetAccountUserName = targetAccount.getString("UserName");
+            if ((pwStatCollection.containsKey(targetAccountUserName))) {
+                PasswordStats stats = pwStatCollection.get(targetAccountUserName);
+                Duration timesincelastfail = Duration.between(stats.lastFailedAttempt, LocalTime.now());
+                if ((accountLockoutCounterResetEnabled) && (timesincelastfail.toSeconds() > accountLockoutCounterResetAfter)) {
+                    stats.lockoutCounter = 0;
+                }
+                if ((timesincelastfail.toSeconds() > accountLockoutDuration) && (targetAccount.getBoolean("Locked", false))) {
+                    // if the account is locked out, it should be updated now.
+                    unlockAccount(targetAccount.getAtOdataId());
+                    targetAccount.put("Locked", false);
+                }
+                pwStatCollection.put(username, stats);
+            }
+        }
+
         // if the account is locked out, no attempts can be made for logging in
         if (account.getBoolean("Locked",false)) {
             return errorResponseService.getErrorMessage("Base","AccessDenied",
@@ -347,6 +368,7 @@ public class AccountService {
         // here if the password matches
         pwStatCollection.remove(username);
 
+        /*
         // see if the password has expired
         if (isPasswordChangeRequired(account)) {
             String requri = req.getRequestURI();
@@ -379,6 +401,8 @@ public class AccountService {
                         List.of(requri), List.of());
             }
         }
+
+         */
         return null;
     }
 }

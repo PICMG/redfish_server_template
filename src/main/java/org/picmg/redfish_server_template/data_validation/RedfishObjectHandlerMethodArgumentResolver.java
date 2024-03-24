@@ -322,6 +322,7 @@ public class RedfishObjectHandlerMethodArgumentResolver implements HandlerMethod
                                     case "updatable":
                                     case "uris":
                                     case "writeOnly":
+                                    case "versionAdded":
 
                                         // do nothing with this field - not used for validation
                                         break;

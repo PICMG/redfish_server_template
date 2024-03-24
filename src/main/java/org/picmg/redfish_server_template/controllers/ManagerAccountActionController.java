@@ -163,7 +163,7 @@ public class ManagerAccountActionController extends RedfishObjectController {
 
         // update the password
         String userName = entity.get("UserName").toString();
-        if (!accountService.updatePassword(userName, parameters.get("NewPassword").toString())) {
+        if (!accountService.updatePassword(userName, parameters.get("NewPassword").toString(), null)) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("");
         }
         RedfishError result = redfishErrorResponseService.getErrorMessage(

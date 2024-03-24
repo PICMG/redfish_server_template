@@ -46,6 +46,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 import javax.servlet.http.HttpServletRequest;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.*;
 
 
@@ -152,7 +154,10 @@ public class AccountController extends RedfishObjectController {
         }
         if (!result.containsKey("Enabled")) result.put("Enabled", true);
         if (!result.containsKey("Locked")) result.put("Locked", false);
-        // TODO: Add link to role?
+
+        if (!result.containsKey("PasswordChangeRequired")) result.put("PasswordChangeRequired",false);
+        if ((accountService.getPasswordExpirationDays()>0) && (!result.containsKey("PasswordExpiration")))
+            result.put("PasswordExpiration", LocalDateTime.now().plusDays(accountService.getPasswordExpirationDays()).toString());
 
         // put the actions into the object for password change
         result.put("Actions", Collections.singletonMap(
@@ -299,7 +304,7 @@ public class AccountController extends RedfishObjectController {
             if (userAccount == null) return null;
 
             // update the password and any statistics with it
-            accountService.updatePassword(userAccount.get("UserName").toString(),obj.get("Password").toString());
+            accountService.updatePassword(userAccount.get("UserName").toString(),obj.get("Password").toString(),obj);
             obj.put("Password",passwordEncoder.encode(obj.get("Password").toString()));
         }
         return null;
