@@ -154,7 +154,7 @@ public class JWTService {
                                 .and("Id").is(claims.get("SessionId")));
         if (session == null) return false;
 
-        // checks for account lockout and expiration will be done at authorization time
+        // checks for account lockout and expiration are done at authentication time
 
         // update the timeout service for this session
         sessionTimeoutService.touch(session.get("UserName").toString());

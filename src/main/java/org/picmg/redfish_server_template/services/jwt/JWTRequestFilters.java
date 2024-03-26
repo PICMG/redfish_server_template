@@ -22,6 +22,8 @@
 
 package org.picmg.redfish_server_template.services.jwt;
 
+import org.picmg.redfish_server_template.services.AccountService;
+import org.picmg.redfish_server_template.services.PasswordEncoderService;
 import org.picmg.redfish_server_template.services.SessionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -37,6 +39,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Base64;
 
 @Component
@@ -44,31 +47,52 @@ public class JWTRequestFilters extends OncePerRequestFilter {
 
     @Autowired
     SessionService sessionService;
-
+    @Autowired
+    PasswordEncoderService passwordEncoderService;
     @Autowired
     JWTService jwtService;
+
+    @Autowired
+    AccountService accountService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         String authHeader = request.getHeader("Authorization");
-
+        String xauthHeader = request.getHeader("X-Auth-Token");
         String userName = null;
         String jwt = null;
         String userPassword;
 
         try {
             // For bearer authentication, get the user name from the token
-            if(authHeader != null && authHeader.startsWith("Bearer")) {
+            if(xauthHeader != null) {
+                jwt = xauthHeader;
+                userName = jwtService.extractJWTUsername(jwt);
+            }
+            else if(authHeader != null && authHeader.startsWith("Bearer")) {
                 jwt = authHeader.substring(7);
                 userName = jwtService.extractJWTUsername(jwt);
-            } 
+            }
+            // For basic authentication, update the account password statistics
+            else if (authHeader != null && authHeader.startsWith("Basic")) {
+                String basicToken = authHeader.substring(6);
+
+                // decode the basic token to get the username/password
+                String decodedToken = new String(Base64.getDecoder().decode(basicToken),StandardCharsets.UTF_8);
+                String uname = decodedToken.substring(0,decodedToken.indexOf(':'));
+                String pw = decodedToken.substring(decodedToken.indexOf(':')+1);
+
+                // update the password try statistics - actual password decisions will be made later by the
+                // basicAuthentication AuthenticationManager
+                accountService.validatePasswordAgainstAccount(uname,pw,request);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
 
         // If the user name is found, get the user details from the session service
         if(userName!=null && SecurityContextHolder.getContext().getAuthentication()==null) {
-            UserDetails userDetails = this.sessionService.loadUserByUsername(userName);
+            UserDetails userDetails = this.passwordEncoderService.loadUserByUsername(userName);
             try {
                 if(jwtService.validateToken(jwt, userDetails)) {
                     UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(

@@ -56,7 +56,7 @@ public class EventDestinationActionController extends RedfishObjectController {
     @Override
     public ResponseEntity<?> actionAsyncHandler(RedfishObject parameters, String uri, HttpServletRequest request, String taskId, TaskService taskService) {
         // get the action type
-        String action = uri.substring(uri.lastIndexOf('.'));
+        String action = uri.substring(uri.lastIndexOf('.')+1);
         if (action.equals("SuspendSubscription")) {
             eventService.suspendSubscription(uri.substring(0, uri.indexOf("/Actions")));
             return ResponseEntity.ok().body("{}");

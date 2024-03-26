@@ -21,28 +21,21 @@
 
 package org.picmg.redfish_server_template.config;
 
-import org.picmg.redfish_server_template.RFmodels.custom.RedfishObject;
-import org.picmg.redfish_server_template.repository.PrivilegeTableRepository;
 import org.picmg.redfish_server_template.repository.AccountService.RedfishAuthorizationManager;
-import org.picmg.redfish_server_template.services.AccountService;
-import org.picmg.redfish_server_template.services.jwt.JWTRequestFilters;
+import org.picmg.redfish_server_template.repository.PrivilegeTableRepository;
+import org.picmg.redfish_server_template.services.PasswordEncoderService;
 import org.picmg.redfish_server_template.services.SessionService;
+import org.picmg.redfish_server_template.services.jwt.JWTRequestFilters;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.NoOpPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-
-import java.time.OffsetDateTime;
 
 @EnableWebSecurity
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
@@ -53,11 +46,14 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     SessionService sessionService;
 
     @Autowired
+    PasswordEncoderService passwordEncoderService;
+
+    @Autowired
     JWTRequestFilters jwtRequestFilters;
 
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        auth.userDetailsService(sessionService).passwordEncoder(passwordEncoder());
+        auth.userDetailsService(passwordEncoderService).passwordEncoder(passwordEncoderService.passwordEncoder());
     }
 
     @Autowired
@@ -106,11 +102,11 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         return super.authenticationManagerBean();
     }
 
-    @Bean
+    /*@Bean
     // by default, hash passwords using this encoder
     public PasswordEncoder passwordEncoder(){
         //return NoOpPasswordEncoder.getInstance();
         return new BCryptPasswordEncoder(10);
     }
-
+    */
 }

@@ -1,13 +1,11 @@
 package org.picmg.redfish_server_template.repository;
 
-import com.mongodb.client.model.Updates;
 import org.bson.Document;
 import org.picmg.redfish_server_template.RFmodels.custom.RedfishCollection;
 import org.picmg.redfish_server_template.RFmodels.custom.RedfishObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.data.mongodb.core.query.*;
 import org.springframework.stereotype.Component;
 
@@ -53,6 +51,7 @@ public class RedfishObjectRepository {
         // attempt to find the object in the repository
         Query query = new Query();
         query.addCriteria(criteria);
+        update.set("_odata_etag",calcEtag());
         FindAndModifyOptions options = new FindAndModifyOptions().returnNew(true).upsert(false);
         return mongoTemplate.findAndModify(query, update, options, Document.class, "RedfishObject");
     }
@@ -174,8 +173,8 @@ public class RedfishObjectRepository {
     public void deleteWithQuery(CriteriaDefinition criteria) {
         Query query = new Query();
         query.addCriteria(criteria);
-        List<Document> listDoc = mongoTemplate.findAllAndRemove(query,"RedfishObject");
-        for (Document doc: listDoc) {
+        List<Document> listObs = mongoTemplate.findAllAndRemove(query, Document.class, "RedfishObject");
+        for (Document doc: listObs) {
             if (doc.containsKey("@odata.id")) {
                 updateCollectionEtag(doc.getString("@odata.id"));
             }
@@ -189,9 +188,22 @@ public class RedfishObjectRepository {
         mongoTemplate.insert(obj, "RedfishDB");
     }
 
-    public List<String> getDistinctWithQuery(String collection, CriteriaDefinition criteria, String property) {
+    public List<String> getDistinctStringsWithQuery(String collection, CriteriaDefinition criteria, String property) {
         Query query = new Query();
         query.addCriteria(criteria);
         return  mongoTemplate.findDistinct(query, property, collection, String.class);
     }
+
+    public List<Long> getDistinctLongWithQuery(String collection, CriteriaDefinition criteria, String property) {
+        Query query = new Query();
+        query.addCriteria(criteria);
+        return  mongoTemplate.findDistinct(query, property, collection, Long.class);
+    }
+
+    public List<Boolean> getDistinctBooleanWithQuery(String collection, CriteriaDefinition criteria, String property) {
+        Query query = new Query();
+        query.addCriteria(criteria);
+        return  mongoTemplate.findDistinct(query, property, collection, Boolean.class);
+    }
+
 }
