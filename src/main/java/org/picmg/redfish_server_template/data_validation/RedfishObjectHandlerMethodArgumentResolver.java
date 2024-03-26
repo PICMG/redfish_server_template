@@ -326,6 +326,9 @@ public class RedfishObjectHandlerMethodArgumentResolver implements HandlerMethod
 
                                         // do nothing with this field - not used for validation
                                         break;
+                                    case "items":
+                                        // Todo: check array items against this definition
+                                        break;
                                     case "anyOf":
                                         String addr = local_address + "/properties/"+propertyName+"/anyOf";
                                         JsonNode anyOfProperty = schema.at(addr );

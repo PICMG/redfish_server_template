@@ -30,10 +30,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import javax.annotation.PostConstruct;
+import java.io.IOException;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -472,10 +476,10 @@ public class EventService {
         objectRepository.update(obj);
     }
 
-    /*
-    @Scheduled(fixedRate=1000)
+
+    /*@Scheduled(fixedDelay=3000)
     public void heartbeat() {
-        for (String key : emitterMap.keySet()) {
+        /*for (String key : emitterMap.keySet()) {
             // make sure the destination is enabled
             Document doc = objectRepository.findFirstWithQuery(Criteria.where("_odata_id").is(key));
             String state = "Enabled";
@@ -493,7 +497,7 @@ public class EventService {
             }
         }
     }
-    */
+*/
 
     private boolean filtersMatch(Document destination, HashMap<String,Object> eventRecord) {
         // filter on messageid/registry prefixes
@@ -574,16 +578,21 @@ public class EventService {
     public void sendEvent(RedfishObject event) {
         for (String key : eventDestinations.keySet()) {
             // make sure the destination is enabled
-            Document eventDestination = objectRepository.findFirstWithQuery(Criteria.where("_odata_id").is(key));
+            Document dest = objectRepository.findFirstWithQuery(Criteria.where("_odata_id").is(key));
+            if (dest==null) {
+                eventDestinations.remove(key);
+                emitterMap.remove(key);
+                continue;
+            }
             String state = "Enabled";
             try {
-                state = ((HashMap<String,String>)eventDestination.get("State")).get("Status");
+                state = ((HashMap<String,String>)dest.get("State")).get("Status");
             } catch (Exception ignored) {
             }
 
             if ((state!=null) && (state.equals("Enabled"))) {
                 for (HashMap<String,Object> eventRecord : (ArrayList<HashMap<String,Object>>)event.get("Events")) {
-                    if (!filtersMatch(eventDestination, eventRecord)) continue;
+                    if (!filtersMatch(dest, eventRecord)) continue;
                     if (emitterMap.containsKey(key)) {
                         // Send to SSE destination
                         try {
@@ -592,8 +601,16 @@ public class EventService {
                         } catch (Exception e) {
                         }
                     } else {
-                        // send to Redfish destination
-
+                        try {
+                            if (dest.containsKey("Context")) {
+                                event.put("Context",dest.getString("Context"));
+                            }
+                            String data = event.toJson();
+                            if (!dest.containsKey("Destination")) continue;
+                            // send to Redfish destination
+                            apiServices.callPOSTAPI(dest.getString("Destination") , data,null);
+                        } catch (Exception ignored) {
+                        }
                     }
                 }
             }
@@ -636,6 +653,10 @@ public class EventService {
             }
         });
         emitterMap.put(eventDestination.getAtOdataId(),emitter);
+        eventDestinations.put(eventDestination.getAtOdataId(),eventDestination);
+    }
+
+    public void addRedfishEventSubscription(RedfishObject eventDestination) {
         eventDestinations.put(eventDestination.getAtOdataId(),eventDestination);
     }
 

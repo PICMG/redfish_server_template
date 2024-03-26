@@ -58,14 +58,18 @@ public class JWTRequestFilters extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         String authHeader = request.getHeader("Authorization");
-
+        String xauthHeader = request.getHeader("X-Auth-Token");
         String userName = null;
         String jwt = null;
         String userPassword;
 
         try {
             // For bearer authentication, get the user name from the token
-            if(authHeader != null && authHeader.startsWith("Bearer")) {
+            if(xauthHeader != null) {
+                jwt = xauthHeader;
+                userName = jwtService.extractJWTUsername(jwt);
+            }
+            else if(authHeader != null && authHeader.startsWith("Bearer")) {
                 jwt = authHeader.substring(7);
                 userName = jwtService.extractJWTUsername(jwt);
             }

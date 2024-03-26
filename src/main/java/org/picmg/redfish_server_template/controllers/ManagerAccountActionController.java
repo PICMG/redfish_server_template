@@ -86,7 +86,8 @@ public class ManagerAccountActionController extends RedfishObjectController {
     public ResponseEntity<?> actionAsyncHandler(RedfishObject parameters, String uri, HttpServletRequest request, String taskId, TaskService taskService) {
         // attempt to get the user information from the Authorization Header
         String authHeader = request.getHeader("Authorization");
-        if (authHeader == null) {
+        String xauthHeader = request.getHeader("X-Auth-Token");
+        if (authHeader == null && xauthHeader== null) {
             // here if there is no authentication - this should not happen, however,
             // we will check for it anyway.
             return ResponseEntity
@@ -94,7 +95,15 @@ public class ManagerAccountActionController extends RedfishObjectController {
         }
 
         String authUserName = null;
-        if(authHeader.startsWith("Bearer")) {
+        if(xauthHeader!=null) {
+            try {
+                String token = xauthHeader;
+                authUserName = jwtService.extractJWTUsername(token);
+            } catch (Exception e) {
+                return ResponseEntity
+                        .status(HttpStatus.UNAUTHORIZED).body("");
+            }
+        } else if(authHeader.startsWith("Bearer")) {
             // For bearer authentication, get the user name from the token
             try {
                 String token = authHeader.substring(7);

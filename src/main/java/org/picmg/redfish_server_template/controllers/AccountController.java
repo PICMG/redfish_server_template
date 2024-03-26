@@ -226,11 +226,17 @@ public class AccountController extends RedfishObjectController {
         // check to see if the user has authority to change this resource
         // get target info
         String authHeader = request.getHeader("Authorization");
+        String xauthHeader = request.getHeader("X-Auth-Token");
         String userName = null;
         boolean authorized = false;
         try {
             // For bearer authentication, get the user name from the token
-            if(authHeader != null && authHeader.startsWith("Bearer")) {
+            if(xauthHeader != null) {
+                String jwt = xauthHeader;
+                userName = jwtService.extractJWTUsername(jwt);
+
+            }
+            else if(authHeader != null && authHeader.startsWith("Bearer")) {
                 String jwt = authHeader.substring(7);
                 userName = jwtService.extractJWTUsername(jwt);
 

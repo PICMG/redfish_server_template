@@ -330,7 +330,7 @@ public class EventDestinationCollectionController extends RedfishObjectControlle
     //
     @Override
     protected void onPostAfterCreation(RedfishObject obj, HttpServletRequest ignoredRequest, CachedSchema ignoredSchema) {
-        //eventService.createSubscription(obj);
+        eventService.addRedfishEventSubscription(obj);
     }
 
     @Override
